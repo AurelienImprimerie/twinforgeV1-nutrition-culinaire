@@ -1,0 +1,16 @@
+{
+  "imports": {
+    "npm:@supabase/supabase-js@2.54.0": "https://esm.sh/@supabase/supabase-js@2.54.0?target=deno",
+    "npm:tslib": "https://esm.sh/tslib@2.6.2?target=deno",
+    "npm:@supabase/node-fetch": "https://esm.sh/@supabase/node-fetch@1.1.1?target=deno",
+    "npm:@supabase/storage-js": "https://esm.sh/@supabase/storage-js@2.7.0?target=deno",
+    "npm:@supabase/functions-js": "https://esm.sh/@supabase/functions-js@2.4.3?target=deno",
+    "npm:@supabase/auth-js": "https://esm.sh/@supabase/auth-js@2.65.0?target=deno",
+    "npm:@supabase/realtime-js": "https://esm.sh/@supabase/realtime-js@2.10.2?target=deno",
+    "npm:@supabase/postgrest-js": "https://esm.sh/@supabase/postgrest-js@1.16.1?target=deno"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom", "dom.iterable", "dom.asynciterable"],
+    "types": ["npm:@types/node"]
+  }
+}

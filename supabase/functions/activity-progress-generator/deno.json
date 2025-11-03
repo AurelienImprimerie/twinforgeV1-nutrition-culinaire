@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "npm:@supabase/supabase-js@2": "https://esm.sh/@supabase/supabase-js@2.54.0?target=deno&external=tslib,@supabase/node-fetch,@supabase/storage-js,@supabase/functions-js,@supabase/auth-js,@supabase/realtime-js,@supabase/postgrest-js",
+    "npm:tslib": "https://esm.sh/tslib@2.6.2?target=deno"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom", "dom.iterable", "dom.asynciterable"],
+    "types": ["npm:@types/node"]
+  }
+}
