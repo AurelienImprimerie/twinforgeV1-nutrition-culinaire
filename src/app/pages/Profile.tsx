@@ -9,10 +9,12 @@ import ProfileHealthTab from './Profile/ProfileHealthTab';
 import ProfileFastingTab from './Profile/ProfileFastingTab';
 import ProfileTrainingTab from './Profile/ProfileTrainingTab';
 import ProfileGeoTab from './Profile/ProfileGeoTab';
+import ProfileMenstrualTab from './Profile/ProfileMenstrualTab';
 import { useFeedback } from '../../hooks/useFeedback';
 import logger from '../../lib/utils/logger';
 import ProfileAvatarTab from './Profile/ProfileAvatarTab';
 import PageHeader from '../../ui/page/PageHeader';
+import { useUserStore } from '../../system/store/userStore';
 
 /**
  * Get dynamic header content based on active tab
@@ -42,6 +44,14 @@ function getTabHeaderContent(activeTab: string) {
         subtitle: 'Conditions médicales et contraintes de santé',
         circuit: 'health' as const,
         color: '#EF4444',
+      };
+    case 'menstrual':
+      return {
+        icon: 'Heart' as const,
+        title: 'Cycle Menstruel',
+        subtitle: 'Suivi et personnalisation selon votre cycle',
+        circuit: 'health' as const,
+        color: '#EC4899',
       };
     case 'fasting':
       return {
@@ -94,16 +104,35 @@ function getTabHeaderContent(activeTab: string) {
 const Profile: React.FC = () => {
   const location = useLocation();
   const { click } = useFeedback();
+  const profile = useUserStore((state) => state.profile);
+
+  // Check if user is female to show menstrual tab
+  const isFemale = profile?.sex === 'female';
+
+  // Debug log
+  React.useEffect(() => {
+    console.log('🌸 MENSTRUAL TAB DEBUG:', {
+      profileSex: profile?.sex,
+      isFemale,
+      profileExists: !!profile,
+      profileKeys: profile ? Object.keys(profile) : [],
+    });
+    logger.debug('PROFILE_TAB', 'Menstrual tab visibility check', {
+      profileSex: profile?.sex,
+      isFemale,
+      profileExists: !!profile,
+    });
+  }, [profile?.sex, isFemale, profile]);
 
   // Derive activeTab from URL search params or hash
   const activeTab = React.useMemo(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['identity', 'nutrition', 'health', 'fasting', 'training', 'geo', 'avatar'].includes(tabParam)) {
+    if (tabParam && ['identity', 'nutrition', 'health', 'menstrual', 'fasting', 'training', 'geo', 'avatar'].includes(tabParam)) {
       return tabParam;
     }
     const hash = location.hash.replace('#', '');
-    return hash && ['identity', 'nutrition', 'health', 'fasting', 'preferences', 'geo', 'avatar'].includes(hash) ? hash : 'identity';
+    return hash && ['identity', 'nutrition', 'health', 'menstrual', 'fasting', 'preferences', 'geo', 'avatar'].includes(hash) ? hash : 'identity';
   }, [location.hash, location.search]);
   
   // Enable keyboard navigation for tabs
@@ -131,6 +160,23 @@ const Profile: React.FC = () => {
         circuit={headerContent.circuit}
         iconColor={headerContent.color}
       />
+
+      {/* Temporary debug display */}
+      <div style={{
+        padding: '12px',
+        background: 'rgba(255, 100, 255, 0.1)',
+        border: '1px solid rgba(255, 100, 255, 0.3)',
+        borderRadius: '8px',
+        color: '#fff',
+        fontSize: '12px',
+        fontFamily: 'monospace'
+      }}>
+        <strong>🔍 DEBUG - Menstrual Tab Visibility:</strong><br/>
+        Profile Sex: {profile?.sex || 'undefined'}<br/>
+        Is Female: {isFemale ? 'YES ✅' : 'NO ❌'}<br/>
+        Profile Loaded: {profile ? 'YES ✅' : 'NO ❌'}<br/>
+        Should Show Tab: {isFemale ? 'YES - Tab should be visible' : 'NO - Tab hidden'}
+      </div>
       
       <Tabs
         defaultValue="identity"
@@ -155,6 +201,11 @@ const Profile: React.FC = () => {
           <Tabs.Trigger value="health" icon="Heart">
             <span className="tab-text">Santé</span>
           </Tabs.Trigger>
+          {isFemale && (
+            <Tabs.Trigger value="menstrual" icon="Heart">
+              <span className="tab-text">Cycle</span>
+            </Tabs.Trigger>
+          )}
           <Tabs.Trigger value="geo" icon="MapPin">
             <span className="tab-text">Geo</span>
           </Tabs.Trigger>
@@ -174,7 +225,13 @@ const Profile: React.FC = () => {
         <Tabs.Panel value="health">
           <ProfileHealthTab />
         </Tabs.Panel>
-        
+
+        {isFemale && (
+          <Tabs.Panel value="menstrual">
+            <ProfileMenstrualTab />
+          </Tabs.Panel>
+        )}
+
         <Tabs.Panel value="preferences">
           <ProfileTrainingTab />
         </Tabs.Panel>
