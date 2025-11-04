@@ -97,6 +97,16 @@ function truncatePrompt(prompt: string, maxLength: number = 100000): string {
   return prompt.substring(0, maxLength) + '\n\n[TRUNCATED DUE TO LENGTH]';
 }
 
+function sanitizeJsonString(jsonStr: string): string {
+  // Remove trailing commas before ] or }
+  let sanitized = jsonStr.replace(/,(\s*[\]}])/g, '$1');
+
+  // Fix common issues with quotes
+  sanitized = sanitized.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+
+  return sanitized;
+}
+
 function extractJsonFromResponse(content: string): string {
   console.log('MEAL_PLAN_GENERATOR Extracting JSON from response:', {
     contentLength: content.length,
@@ -105,30 +115,30 @@ function extractJsonFromResponse(content: string): string {
 
   const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/i;
   const markdownMatch = content.match(jsonBlockRegex);
-  
+
   if (markdownMatch && markdownMatch[1]) {
     const extractedJson = markdownMatch[1].trim();
     console.log('MEAL_PLAN_GENERATOR Found JSON in markdown block:', {
       length: extractedJson.length,
       preview: extractedJson.substring(0, 200)
     });
-    return extractedJson;
+    return sanitizeJsonString(extractedJson);
   }
 
   const firstBrace = content.indexOf('{');
   const lastBrace = content.lastIndexOf('}');
-  
+
   if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
     throw new Error(`No valid JSON boundaries found in OpenAI response. First brace at: ${firstBrace}, Last brace at: ${lastBrace}`);
   }
-  
+
   const extractedJson = content.substring(firstBrace, lastBrace + 1);
   console.log('MEAL_PLAN_GENERATOR Extracted JSON using brace search:', {
     length: extractedJson.length,
     preview: extractedJson.substring(0, 200)
   });
-  
-  return extractedJson;
+
+  return sanitizeJsonString(extractedJson);
 }
 
 async function generateMealPlanWithAI(
@@ -300,12 +310,12 @@ RÉPONDS UNIQUEMENT AVEC LE JSON COMPLET. NE FOURNIS AUCUN TEXTE EXPLICATIF AVAN
     let mealPlan: MealPlan;
     try {
       const jsonString = extractJsonFromResponse(content);
-      
+
       console.log('MEAL_PLAN_GENERATOR About to parse JSON string:', {
         length: jsonString.length,
         preview: jsonString.substring(0, 300)
       });
-      
+
       mealPlan = JSON.parse(jsonString);
       console.log('MEAL_PLAN_GENERATOR Successfully parsed meal plan:', {
         weekNumber: mealPlan.week_number,
@@ -315,12 +325,31 @@ RÉPONDS UNIQUEMENT AVEC LE JSON COMPLET. NE FOURNIS AUCUN TEXTE EXPLICATIF AVAN
         model: 'gpt-5-mini'
       });
     } catch (parseError) {
-      console.error('MEAL_PLAN_GENERATOR JSON parsing error:', {
-        error: parseError,
-        contentLength: content?.length || 0,
-        contentPreview: content?.substring(0, 1000) || 'No content'
-      });
-      throw new Error(`Failed to parse OpenAI response as JSON: ${parseError}`);
+      const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+      const positionMatch = errorMessage.match(/position (\d+)/);
+
+      if (positionMatch) {
+        const errorPos = parseInt(positionMatch[1]);
+        const jsonString = extractJsonFromResponse(content);
+        const contextStart = Math.max(0, errorPos - 100);
+        const contextEnd = Math.min(jsonString.length, errorPos + 100);
+
+        console.error('MEAL_PLAN_GENERATOR JSON parsing error at position:', {
+          error: errorMessage,
+          position: errorPos,
+          contextBefore: jsonString.substring(contextStart, errorPos),
+          contextAfter: jsonString.substring(errorPos, contextEnd),
+          totalLength: jsonString.length
+        });
+      } else {
+        console.error('MEAL_PLAN_GENERATOR JSON parsing error:', {
+          error: errorMessage,
+          contentLength: content?.length || 0,
+          contentPreview: content?.substring(0, 1000) || 'No content'
+        });
+      }
+
+      throw new Error(`Failed to parse OpenAI response as JSON: ${errorMessage}`);
     }
 
     const tokenUsage = {
