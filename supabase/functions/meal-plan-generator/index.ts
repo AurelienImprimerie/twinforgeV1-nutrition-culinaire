@@ -10,6 +10,7 @@ const corsHeaders = {
 interface MealPlanRequest {
   user_id: string;
   session_id?: string;
+  inventory_session_id?: string;
   week_number: number;
   start_date: string;
   inventory_count: number;
@@ -498,10 +499,19 @@ Deno.serve(async (req) => {
 
     console.log('MEAL_PLAN_GENERATOR Stream completed successfully');
 
+    const startDate = new Date(requestData.start_date);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+
     const mealPlanData = {
       user_id: requestData.user_id,
       session_id: isValidUUID(requestData.session_id) ? requestData.session_id : null,
+      inventory_session_id: isValidUUID(requestData.inventory_session_id) ? requestData.inventory_session_id : null,
+      week_number: requestData.week_number,
+      start_date: requestData.start_date,
+      end_date: endDate.toISOString().split('T')[0],
       plan_data: mealPlan,
+      batch_cooking_enabled: requestData.batch_cooking_enabled || false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
