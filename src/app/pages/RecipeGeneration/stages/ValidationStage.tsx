@@ -15,6 +15,7 @@ interface ValidationStageProps {
   onDiscard: () => void;
   onViewRecipe: (recipe: Recipe) => void;
   isSaving: boolean;
+  onExit: () => void;
 }
 
 const ValidationStage: React.FC<ValidationStageProps> = ({
@@ -22,7 +23,8 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
   onSaveAll,
   onDiscard,
   onViewRecipe,
-  isSaving
+  isSaving,
+  onExit
 }) => {
   const { isPerformanceMode } = usePerformanceMode();
   const { loadingState } = useRecipeGenerationPipeline();
@@ -33,6 +35,7 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
   const isStreaming = loadingState === 'streaming';
   const readyRecipes = recipes.filter(r => r.status === 'ready');
   const loadingRecipes = recipes.filter(r => r.status === 'loading');
+  const allRecipesReady = recipes.length > 0 && recipes.every(r => r.status === 'ready');
 
   const handleViewRecipe = (recipe: Recipe) => {
     setSelectedRecipeForDetail(recipe);
@@ -92,12 +95,20 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                   <h2 className="text-2xl font-bold text-white mb-1">
                     {isStreaming ? 'Génération en Cours...' : 'Vos Recettes sont Prêtes !'}
                   </h2>
-                  <p className="text-white/70">
-                    {isStreaming
-                      ? `${readyRecipes.length} / ${recipes.length} recette${recipes.length > 1 ? 's' : ''} générée${recipes.length > 1 ? 's' : ''}`
-                      : `${recipes.length} recette${recipes.length > 1 ? 's' : ''} générée${recipes.length > 1 ? 's' : ''}`
-                    }
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-white/70">
+                      {isStreaming
+                        ? `${readyRecipes.length} / ${recipes.length} recette${recipes.length > 1 ? 's' : ''} générée${recipes.length > 1 ? 's' : ''}`
+                        : `${recipes.length} recette${recipes.length > 1 ? 's' : ''} générée${recipes.length > 1 ? 's' : ''}`
+                      }
+                    </p>
+                    {isStreaming && (
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-400/20 border border-green-400/30">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                        <span className="text-green-400 text-xs font-medium">En création</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -111,33 +122,56 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                 >
                   Régénérer
                 </button>
-                <button
-                  onClick={onSaveAll}
-                  disabled={isSaving || isStreaming}
-                  className={`px-6 py-2 text-white font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
-                    (isSaving || isStreaming) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(34, 197, 94, 0.85) 100%)',
-                    border: '2px solid color-mix(in srgb, #10B981 60%, transparent)',
-                    boxShadow: `
-                      0 8px 24px color-mix(in srgb, #10B981 40%, transparent),
-                      inset 0 2px 0 rgba(255, 255, 255, 0.3)
-                    `
-                  }}
-                >
-                  {isSaving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Sauvegarde...</span>
-                    </>
-                  ) : (
-                    <>
-                      <SpatialIcon Icon={ICONS.Save} size={18} />
-                      <span>Sauvegarder dans ma Bibliothèque</span>
-                    </>
-                  )}
-                </button>
+
+                {/* Save Button - Skeleton during streaming */}
+                {isStreaming ? (
+                  <div
+                    className="px-6 py-2 rounded-xl flex items-center gap-2 animate-pulse"
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      border: '2px solid rgba(16, 185, 129, 0.3)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    <div className="w-4 h-4 rounded bg-white/20" />
+                    <span className="text-white/60 font-semibold">Génération en cours...</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={onSaveAll}
+                    disabled={isSaving || !allRecipesReady}
+                    className={`px-6 py-2 text-white font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                      (isSaving || !allRecipesReady) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                    }`}
+                    style={
+                      allRecipesReady && !isSaving
+                        ? {
+                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(34, 197, 94, 0.85) 100%)',
+                            border: '2px solid color-mix(in srgb, #10B981 60%, transparent)',
+                            boxShadow: `
+                              0 8px 24px color-mix(in srgb, #10B981 40%, transparent),
+                              inset 0 2px 0 rgba(255, 255, 255, 0.3)
+                            `
+                          }
+                        : {
+                            background: 'rgba(16, 185, 129, 0.2)',
+                            border: '2px solid rgba(16, 185, 129, 0.3)'
+                          }
+                    }
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Sauvegarde...</span>
+                      </>
+                    ) : (
+                      <>
+                        <SpatialIcon Icon={ICONS.Save} size={18} />
+                        <span>Sauvegarder dans ma Bibliothèque</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </GlassCard>
@@ -201,6 +235,23 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
             </GlassCard>
           </MotionDiv>
         )}
+
+        {/* Exit Button */}
+        <MotionDiv
+          {...(!isPerformanceMode && {
+            initial: { opacity: 0 },
+            animate: { opacity: 1 },
+            transition: { duration: 0.3, delay: 0.4 }
+          })}
+          className="flex justify-end"
+        >
+          <button
+            onClick={onExit}
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200"
+          >
+            Quitter
+          </button>
+        </MotionDiv>
       </div>
 
       {/* Recipe Detail Modal */}

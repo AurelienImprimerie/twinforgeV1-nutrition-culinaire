@@ -1,15 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { usePerformanceMode } from '../../../../system/context/PerformanceModeContext';
-import { useRecipeGenerationPipeline } from '../../../../system/store/recipeGeneration';
-import RecipeCard from '../../../pages/Fridge/tabs/RecipesTab/components/RecipeCard';
 import RecipeGenerationLoader from '../../../pages/Fridge/tabs/RecipesTab/components/RecipeGenerationLoader';
 
-const GeneratingStage: React.FC = () => {
-  const { isPerformanceMode } = usePerformanceMode();
-  const { recipeCandidates, loadingState } = useRecipeGenerationPipeline();
+interface GeneratingStageProps {
+  onExit: () => void;
+}
 
-  return <RecipeGenerationLoader />;
+const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
+  const { isPerformanceMode } = usePerformanceMode();
+  const MotionDiv = isPerformanceMode ? 'div' : motion.div;
+
+  return (
+    <div className="space-y-6">
+      <RecipeGenerationLoader />
+
+      {/* Exit Button */}
+      <MotionDiv
+        {...(!isPerformanceMode && {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { duration: 0.3, delay: 0.3 }
+        })}
+        className="flex justify-end"
+      >
+        <button
+          onClick={onExit}
+          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200"
+        >
+          Quitter
+        </button>
+      </MotionDiv>
+    </div>
+  );
 };
 
 export default GeneratingStage;

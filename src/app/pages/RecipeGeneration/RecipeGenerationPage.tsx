@@ -235,16 +235,6 @@ const RecipeGenerationPage: React.FC = () => {
         loadingMessage={loadingMessage}
       />
 
-      {/* Exit Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleExit}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200"
-        >
-          Quitter
-        </button>
-      </div>
-
       {/* Stage Content */}
       {currentStep === 'configuration' && (
         <ConfigurationStage
@@ -254,10 +244,11 @@ const RecipeGenerationPage: React.FC = () => {
           onSetRecipeCount={handleSetRecipeCount}
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
+          onExit={handleExit}
         />
       )}
 
-      {currentStep === 'generating' && <GeneratingStage />}
+      {currentStep === 'generating' && <GeneratingStage onExit={handleExit} />}
 
       {currentStep === 'validation' && (
         <ValidationStage
@@ -266,6 +257,7 @@ const RecipeGenerationPage: React.FC = () => {
           onDiscard={handleDiscard}
           onViewRecipe={handleViewRecipe}
           isSaving={false}
+          onExit={handleExit}
         />
       )}
     </motion.div>

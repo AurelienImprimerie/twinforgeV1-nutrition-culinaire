@@ -14,6 +14,7 @@ interface ConfigurationStageProps {
   onSetRecipeCount: (count: number) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  onExit: () => void;
 }
 
 const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
@@ -22,7 +23,8 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
   recipeCount,
   onSetRecipeCount,
   onGenerate,
-  isGenerating
+  isGenerating,
+  onExit
 }) => {
   const { isPerformanceMode } = usePerformanceMode();
   const MotionDiv = isPerformanceMode ? 'div' : motion.div;
@@ -217,10 +219,10 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
         </GlassCard>
       </MotionDiv>
 
-      {/* Inventory Context Summary Cards */}
+      {/* Process Understanding Cards */}
       {selectedInventory && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Last Inventory Used */}
+          {/* Card 1: Inventory - Focus Frigo */}
           <MotionDiv
             {...(!isPerformanceMode && {
               initial: { opacity: 0, y: 20 },
@@ -245,7 +247,7 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                   }}
                 >
                   <SpatialIcon
-                    Icon={ICONS.Calendar}
+                    Icon={ICONS.Package}
                     size={20}
                     className="text-green-400"
                     style={{
@@ -254,23 +256,22 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                   />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1 text-sm">Dernier Inventaire</h3>
+                  <h3 className="text-white font-semibold mb-1 text-sm">Votre Inventaire</h3>
                   <p className="text-white/80 text-xs">
                     Scanné le {new Date(selectedInventory.created_at).toLocaleDateString('fr-FR', {
                       day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
+                      month: 'long'
                     })}
                   </p>
                   <p className="text-green-400 text-xs mt-1 font-medium">
-                    {selectedInventory.inventory_final.length} ingrédients détectés
+                    {selectedInventory.inventory_final.length} ingrédients disponibles
                   </p>
                 </div>
               </div>
             </GlassCard>
           </MotionDiv>
 
-          {/* Ingredient Usage Encouragement */}
+          {/* Card 2: AI Personalization */}
           <MotionDiv
             {...(!isPerformanceMode && {
               initial: { opacity: 0, y: 20 },
@@ -295,7 +296,7 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                   }}
                 >
                   <SpatialIcon
-                    Icon={ICONS.Sparkles}
+                    Icon={ICONS.Brain}
                     size={20}
                     className="text-green-400"
                     style={{
@@ -304,19 +305,19 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                   />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1 text-sm">Recettes Optimisées</h3>
+                  <h3 className="text-white font-semibold mb-1 text-sm">IA Personnalisée</h3>
                   <p className="text-white/80 text-xs">
-                    La Forge créera {recipeCount} recettes basées sur vos ingrédients disponibles
+                    Génération adaptée à vos préférences nutritionnelles et restrictions alimentaires
                   </p>
                   <p className="text-green-400 text-xs mt-1 font-medium">
-                    Maximisation de l'utilisation
+                    Recettes sur mesure
                   </p>
                 </div>
               </div>
             </GlassCard>
           </MotionDiv>
 
-          {/* Freshness Indicator */}
+          {/* Card 3: Culinary Variety */}
           <MotionDiv
             {...(!isPerformanceMode && {
               initial: { opacity: 0, y: 20 },
@@ -341,7 +342,7 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                   }}
                 >
                   <SpatialIcon
-                    Icon={ICONS.Clock}
+                    Icon={ICONS.Globe}
                     size={20}
                     className="text-green-400"
                     style={{
@@ -350,12 +351,12 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                   />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1 text-sm">Priorité Fraîcheur</h3>
+                  <h3 className="text-white font-semibold mb-1 text-sm">Variété Culinaire</h3>
                   <p className="text-white/80 text-xs">
-                    Recettes priorisées pour utiliser les ingrédients les plus frais en premier
+                    Découvrez {recipeCount} nouvelles recettes variées pour enrichir votre semaine
                   </p>
                   <p className="text-green-400 text-xs mt-1 font-medium">
-                    Zéro gaspillage alimentaire
+                    Inspiration quotidienne
                   </p>
                 </div>
               </div>
@@ -363,6 +364,23 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
           </MotionDiv>
         </div>
       )}
+
+      {/* Exit Button */}
+      <MotionDiv
+        {...(!isPerformanceMode && {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { duration: 0.3, delay: 0.6 }
+        })}
+        className="flex justify-end"
+      >
+        <button
+          onClick={onExit}
+          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200"
+        >
+          Quitter
+        </button>
+      </MotionDiv>
     </div>
   );
 };
