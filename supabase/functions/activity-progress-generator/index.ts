@@ -7,7 +7,7 @@
   Fréquence: Avec mise en cache intelligente (évite les appels inutiles à OpenAI)
 */
 
-import { createClient } from 'npm:@supabase/supabase-js@2.54.0';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { checkTokenBalance, consumeTokensAtomic, createInsufficientTokensResponse } from '../_shared/tokenMiddleware.ts';
 import { getReproductiveHealthContext } from '../_shared/utils/reproductiveHealthContext.ts';

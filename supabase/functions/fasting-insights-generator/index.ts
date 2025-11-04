@@ -223,7 +223,7 @@ function buildFastingInsightsPrompt(profile: UserProfile, sessions: FastingSessi
   const successRate = completedSessions.length > 0 ? 
     (successfulSessions.length / completedSessions.length) * 100 : 0;
 
-  return `Tu es un expert en jeûne intermittent et en optimisation métabolique. Analyse les données de jeûne de cet utilisateur et génère des insights personnalisés.
+  let contextPrompt = `Tu es un expert en jeûne intermittent et en optimisation métabolique. Analyse les données de jeûne de cet utilisateur et génère des insights personnalisés.
 
 PROFIL UTILISATEUR:
 - Sexe: ${profile.sex || 'Non spécifié'}
@@ -235,7 +235,9 @@ PROFIL UTILISATEUR:
 - Niveau de stress: ${profile.emotions?.stress || 'Non spécifié'}/10
 - Heures de sommeil: ${profile.emotions?.sleepHours || 'Non spécifié'}h
 - Régime alimentaire: ${profile.nutrition?.diet || 'Non spécifié'}
-- Protocole de jeûne préféré: ${profile.nutrition?.fastingWindow?.protocol || 'Non spécifié'}
+- Protocole de jeûne préféré: ${profile.nutrition?.fastingWindow?.protocol || 'Non spécifié'}`;
+
+  return contextPrompt
 
 DONNÉES DE JEÛNE (${periodDays} derniers jours):
 - Sessions totales: ${sessions.length}
