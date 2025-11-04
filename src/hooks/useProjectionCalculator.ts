@@ -25,23 +25,23 @@ export interface ProjectionResult {
   metabolicImprovementPercent?: number;
 }
 
-// Multiplicateurs de durée réalistes et cohérents
+// Multiplicateurs de durée réalistes et cohérents (RÉDUITS pour plus de réalisme)
 const DURATION_MULTIPLIERS: Record<ProjectionDuration, number> = {
-  '3_months': 0.3,   // Réduction réaliste court terme
-  '6_months': 0.6,   // Progression modérée 6 mois
-  '1_year': 1.0,     // Référence
-  '3_years': 2.5,    // Transformation long terme réaliste
+  '3_months': 0.20,  // Réduction réaliste court terme
+  '6_months': 0.40,  // Progression modérée 6 mois
+  '1_year': 0.70,    // Référence ajustée
+  '3_years': 1.80,   // Transformation long terme réaliste
 };
 
-// Coefficients réalistes pour pearFigure (ventre/gras) et bodybuilderSize (muscle)
-const NUTRITION_BASE_COEFFICIENT = 0.35;  // Impact nutritionnel modéré
-const SPORT_BURN_COEFFICIENT = 0.2;       // Brûlage graisse réaliste
-const SPORT_MUSCLE_COEFFICIENT = 0.25;    // Développement musculaire progressif
-const NUTRITION_MUSCLE_COEFFICIENT = 0.12; // Support nutritionnel modéré
+// Coefficients réalistes pour pearFigure (ventre/gras) et bodybuilderSize (muscle) (RÉDUITS)
+const NUTRITION_BASE_COEFFICIENT = 0.25;  // Impact nutritionnel modéré
+const SPORT_BURN_COEFFICIENT = 0.15;      // Brûlage graisse réaliste
+const SPORT_MUSCLE_COEFFICIENT = 0.18;    // Développement musculaire progressif
+const NUTRITION_MUSCLE_COEFFICIENT = 0.08; // Support nutritionnel modéré
 
 // Bonus synergique réduit pour plus de réalisme
 const SYNERGY_THRESHOLD = 4; // Niveau à partir duquel le bonus s'applique
-const SYNERGY_BONUS_MULTIPLIER = 1.15; // +15% d'efficacité (au lieu de 30%)
+const SYNERGY_BONUS_MULTIPLIER = 1.10; // +10% d'efficacité (réduit)
 
 /**
  * Hook pour calculer les projections morphologiques basées sur nutrition, sport et durée
@@ -102,13 +102,13 @@ export function useProjectionCalculator(
       // Impact nutritionnel progressif
       let nutritionImpact = (params.nutritionQuality - 3) * -NUTRITION_BASE_COEFFICIENT;
       if (params.nutritionQuality === 5) {
-        nutritionImpact *= 1.2; // Bonus modéré 20% pour nutrition parfaite
+        nutritionImpact *= 1.15; // Bonus modéré 15% pour nutrition parfaite (réduit)
       }
 
       // Impact sportif sur brûlage des graisses
       let sportBurnImpact = (params.sportIntensity - 1) * -SPORT_BURN_COEFFICIENT;
       if (params.sportIntensity === 5) {
-        sportBurnImpact *= 1.15; // Bonus modéré 15% pour sport très intense
+        sportBurnImpact *= 1.10; // Bonus modéré 10% pour sport très intense (réduit)
       }
 
       // Bonus synergique: quand nutrition ET sport sont excellents
@@ -117,7 +117,7 @@ export function useProjectionCalculator(
       const synergyMultiplier = hasSynergy ? SYNERGY_BONUS_MULTIPLIER : 1.0;
 
       // Bonus modéré pour ceux qui ont beaucoup de gras à perdre
-      const motivationBonus = basePearFigure > 1.5 ? 1.1 : 1.0;
+      const motivationBonus = basePearFigure > 1.5 ? 1.08 : 1.0;
 
       // Effet plateau: plus c'est bas, plus c'est difficile de perdre (réalisme)
       const plateauFactor = basePearFigure < 0 ? 0.6 : 1.0;
@@ -146,20 +146,20 @@ export function useProjectionCalculator(
       // Impact sportif sur développement musculaire
       let sportGainImpact = (params.sportIntensity - 3) * SPORT_MUSCLE_COEFFICIENT;
       if (params.sportIntensity === 5) {
-        sportGainImpact *= 1.15; // Bonus modéré 15% pour sport très intense
+        sportGainImpact *= 1.10; // Bonus modéré 10% pour sport très intense (réduit)
       }
 
       // Support nutritionnel pour récupération et croissance
       let nutritionSupportImpact = (params.nutritionQuality - 3) * NUTRITION_MUSCLE_COEFFICIENT;
       if (params.nutritionQuality === 5) {
-        nutritionSupportImpact *= 1.15; // Bonus modéré 15% pour nutrition optimale
+        nutritionSupportImpact *= 1.10; // Bonus modéré 10% pour nutrition optimale (réduit)
       }
 
       // Pénalité si sport intense mais nutrition mauvaise (catabolisme)
       const nutritionPenalty = (params.sportIntensity >= 4 && params.nutritionQuality <= 2) ? 0.6 : 1.0;
 
       // Bonus synergie modéré pour muscle
-      const muscleSynergyMultiplier = hasSynergy ? 1.1 : 1.0;
+      const muscleSynergyMultiplier = hasSynergy ? 1.08 : 1.0;
 
       const totalMuscleChange = (
         (sportGainImpact + nutritionSupportImpact) *
@@ -224,7 +224,7 @@ export function useProjectionCalculator(
 
       // Message motivant si synergy active
       if (hasSynergy) {
-        warnings.push('⚡ Synergie activée ! Nutrition et sport excellents = résultats optimaux (+15%)');
+        warnings.push('⚡ Synergie activée ! Nutrition et sport excellents = résultats optimaux (+10%)');
       }
 
       /**

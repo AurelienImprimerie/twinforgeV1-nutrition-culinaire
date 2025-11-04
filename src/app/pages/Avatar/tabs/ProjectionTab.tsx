@@ -44,6 +44,11 @@ const ProjectionTab: React.FC = () => {
   const [saveName, setSaveName] = useState('');
   const [saveDescription, setSaveDescription] = useState('');
 
+  // Debug: Log modal state changes
+  React.useEffect(() => {
+    console.log('🟢 Modal state changed:', showSaveModal);
+  }, [showSaveModal]);
+
   // Hook de calcul des projections
   const resolvedGender = (bodyScanData?.resolved_gender || profile?.sex || 'male') as 'male' | 'female';
   const baseMorphData = bodyScanData?.morph_values || {};
@@ -339,7 +344,10 @@ const ProjectionTab: React.FC = () => {
       {hasSignificantChange && (
         <GlassCard className="p-4" style={{ position: 'relative', zIndex: 10 }}>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔵 Save button clicked, opening modal');
               click();
               setShowSaveModal(true);
             }}
@@ -352,7 +360,8 @@ const ProjectionTab: React.FC = () => {
               opacity: isCreating ? 0.5 : 1,
               position: 'relative',
               zIndex: 11,
-              cursor: isCreating ? 'not-allowed' : 'pointer'
+              cursor: isCreating ? 'not-allowed' : 'pointer',
+              pointerEvents: isCreating ? 'none' : 'auto'
             }}
           >
             <div className="flex items-center justify-center gap-2">
@@ -367,7 +376,8 @@ const ProjectionTab: React.FC = () => {
       <AnimatePresence>
         {showSaveModal && createPortal(
           <ConditionalMotion
-            className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-lg flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center p-4"
+            style={{ zIndex: 99999 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -375,13 +385,14 @@ const ProjectionTab: React.FC = () => {
           >
             <ConditionalMotion
               className="relative w-full max-w-md"
+              style={{ zIndex: 100000 }}
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              <GlassCard className="p-6 bg-gradient-to-br from-emerald-900/20 to-green-900/20 border-emerald-500/30">
+              <GlassCard className="p-6 bg-gradient-to-br from-emerald-900/20 to-green-900/20 border-emerald-500/30" style={{ position: 'relative', zIndex: 100001 }}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white font-semibold text-lg">Sauvegarder la projection</h3>
                   <button
