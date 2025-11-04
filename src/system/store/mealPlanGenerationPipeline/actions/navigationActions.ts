@@ -2,7 +2,6 @@ import type { StateCreator } from 'zustand';
 import type { MealPlanGenerationPipelineState, MealPlanGenerationStep } from '../types';
 import { MEAL_PLAN_GENERATION_STEPS } from '../constants';
 import logger from '../../../../lib/utils/logger';
-import { nanoid } from 'nanoid';
 
 export interface NavigationActions {
   startPipeline: () => void;
@@ -15,7 +14,7 @@ export const createNavigationActions = (
   get: StateCreator<MealPlanGenerationPipelineState>['getState']
 ): NavigationActions => ({
   startPipeline: () => {
-    const sessionId = nanoid();
+    const sessionId = crypto.randomUUID();
 
     set({
       isActive: true,

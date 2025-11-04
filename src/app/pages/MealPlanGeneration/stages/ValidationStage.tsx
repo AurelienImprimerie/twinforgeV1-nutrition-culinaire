@@ -112,23 +112,22 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
         </GlassCard>
       </MotionDiv>
 
-      {/* Week Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Week Summary Cards with Recipe Names */}
+      <div className="space-y-4">
         {Array.from({ length: weekCount }).map((_, weekIndex) => {
           const weekDays = mealPlan.days.slice(weekIndex * 7, (weekIndex + 1) * 7);
-          const weekMeals = weekDays.reduce((sum, day) => sum + (day.meals?.length || 0), 0);
 
           return (
             <MotionDiv
               key={`week-${weekIndex}`}
               {...(!isPerformanceMode && {
-                initial: { opacity: 0, scale: 0.95 },
-                animate: { opacity: 1, scale: 1 },
-                transition: { duration: 0.3, delay: weekIndex * 0.1 }
+                initial: { opacity: 0, y: 20 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.4, delay: weekIndex * 0.1 }
               })}
             >
               <GlassCard
-                className="p-5"
+                className="p-6"
                 style={{
                   background: `
                     radial-gradient(circle at 30% 20%, color-mix(in srgb, #8B5CF6 8%, transparent) 0%, transparent 60%),
@@ -141,9 +140,9 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                   `
                 }}
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-5">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
                     style={{
                       background: 'linear-gradient(135deg, #8B5CF6, #A855F7)',
                       boxShadow: '0 0 16px rgba(139, 92, 246, 0.4)'
@@ -151,37 +150,89 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                   >
                     <SpatialIcon
                       Icon={ICONS.Calendar}
-                      size={20}
+                      size={24}
                       className="text-white"
                     />
                   </div>
                   <div>
-                    <h4 className="text-white font-bold text-lg">
+                    <h3 className="text-white font-bold text-xl">
                       Semaine {weekIndex + 1}
-                    </h4>
+                    </h3>
                     <p className="text-white/60 text-sm">
-                      {weekDays.length} jours · {weekMeals} repas
+                      {weekDays.length} jours planifiés
                     </p>
                   </div>
                 </div>
 
-                {/* Days List */}
-                <div className="space-y-2">
+                {/* Days Grid with Meal Names */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {weekDays.map((day, dayIndex) => (
                     <div
                       key={`day-${dayIndex}`}
-                      className="flex items-center justify-between p-2 rounded-lg"
+                      className="p-4 rounded-lg"
                       style={{
                         background: 'rgba(139, 92, 246, 0.05)',
-                        border: '1px solid rgba(139, 92, 246, 0.15)'
+                        border: '1px solid rgba(139, 92, 246, 0.2)'
                       }}
                     >
-                      <span className="text-white/80 text-sm font-medium">
-                        {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'short' })}
-                      </span>
-                      <span className="text-white/60 text-xs">
-                        {day.meals?.length || 0} repas
-                      </span>
+                      <div className="font-semibold text-white mb-3 text-sm">
+                        {new Date(day.date).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'short'
+                        })}
+                      </div>
+
+                      {/* Meals List with Icons */}
+                      <div className="space-y-2">
+                        {day.meals?.map((meal, mealIndex) => {
+                          const mealIcons = {
+                            breakfast: ICONS.Coffee,
+                            lunch: ICONS.UtensilsCrossed,
+                            dinner: ICONS.UtensilsCrossed,
+                            snack: ICONS.Cookie
+                          };
+
+                          return (
+                            <div
+                              key={`meal-${mealIndex}`}
+                              className="flex items-start gap-2 p-2 rounded"
+                              style={{
+                                background: 'rgba(139, 92, 246, 0.08)'
+                              }}
+                            >
+                              <div
+                                className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
+                                style={{
+                                  background: 'rgba(139, 92, 246, 0.2)',
+                                  border: '1px solid rgba(139, 92, 246, 0.3)'
+                                }}
+                              >
+                                <SpatialIcon
+                                  Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
+                                  size={14}
+                                  className="text-violet-400"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white/90 text-sm font-medium leading-tight">
+                                  {meal.name}
+                                </p>
+                                {meal.ingredients && meal.ingredients.length > 0 && (
+                                  <p className="text-white/50 text-xs mt-1 line-clamp-1">
+                                    {meal.ingredients.slice(0, 3).join(', ')}
+                                  </p>
+                                )}
+                                {meal.calories && (
+                                  <p className="text-violet-400/80 text-xs mt-1">
+                                    {meal.calories} kcal
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   ))}
                 </div>
