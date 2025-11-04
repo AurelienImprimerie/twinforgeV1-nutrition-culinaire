@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { MealPlanGenerationPipelineState, MealPlan } from '../types';
 import { supabase } from '../../../supabase/client';
+import { useUserStore } from '../../userStore';
 import logger from '../../../../lib/utils/logger';
 import { nanoid } from 'nanoid';
 
@@ -25,8 +26,8 @@ export const createGenerationActions = (
       throw new Error('Aucun inventaire sélectionné');
     }
 
-    const { session } = await supabase.auth.getSession();
-    const userId = session?.data?.session?.user?.id;
+    const { session } = useUserStore.getState();
+    const userId = session?.user?.id;
 
     if (!userId) {
       throw new Error('Utilisateur non authentifié');
@@ -84,13 +85,12 @@ export const createGenerationActions = (
           sessionId: currentSessionId
         });
 
-        const { data: { session: authSession } } = await supabase.auth.getSession();
         const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meal-plan-generator`;
 
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${authSession?.access_token}`,
+            'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -255,8 +255,8 @@ export const createGenerationActions = (
     const state = get();
     const { mealPlanCandidates, currentSessionId } = state;
 
-    const { session } = await supabase.auth.getSession();
-    const userId = session?.data?.session?.user?.id;
+    const { session } = useUserStore.getState();
+    const userId = session?.user?.id;
 
     if (!userId) {
       throw new Error('Utilisateur non authentifié');
@@ -297,7 +297,6 @@ export const createGenerationActions = (
         simulatedOverallProgress: 70
       });
 
-      const { data: { session: authSession } } = await supabase.auth.getSession();
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipe-detail-generator`;
 
       let totalMeals = 0;
@@ -327,7 +326,7 @@ export const createGenerationActions = (
               const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${authSession?.access_token}`,
+                  'Authorization': `Bearer ${session?.access_token}`,
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -454,8 +453,8 @@ export const createGenerationActions = (
   saveMealPlans: async () => {
     const state = get();
     const { mealPlanCandidates, currentSessionId, config } = state;
-    const { session } = await supabase.auth.getSession();
-    const userId = session?.data?.session?.user?.id;
+    const { session } = useUserStore.getState();
+    const userId = session?.user?.id;
 
     if (!userId) {
       throw new Error('Utilisateur non authentifié');
