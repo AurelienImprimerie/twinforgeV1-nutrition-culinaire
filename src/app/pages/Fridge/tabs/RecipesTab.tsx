@@ -12,20 +12,19 @@ import { useMealPlanStore } from '../../../../system/store/mealPlanStore';
 import type { Recipe } from '../../../../domain/recipe';
 import RecipeDetailModal from './RecipesTab/components/RecipeDetailModal';
 import RecipeCard from './RecipesTab/components/RecipeCard';
-import RecipeGenerationHeader from './RecipesTab/components/RecipeGenerationHeader';
 import RecipeFilterSystem from './RecipesTab/components/RecipeFilterSystem';
-import RecipeGenerationLoader from './RecipesTab/components/RecipeGenerationLoader';
 import EmptyRecipesState from './RecipesTab/components/EmptyRecipesState';
-import RecipeValidationCTA from './RecipesTab/components/RecipeValidationCTA';
 import RecipeActionButtons from './RecipesTab/components/RecipeActionButtons';
+import RecipeLibraryCTA from '../components/RecipeLibraryCTA';
 import { useRecipeData } from './RecipesTab/hooks/useRecipeData';
 import { useRecipeFiltering } from './RecipesTab/hooks/useRecipeFiltering';
 import { useRecipeExport } from './RecipesTab/hooks/useRecipeExport';
 import { useRecipeDeletion } from './RecipesTab/hooks/useRecipeDeletion';
 
 /**
- * Recipes Tab - Bibliothèque Persistante de Recettes Générées
- * Gère à la fois les nouvelles recettes générées et les recettes sauvegardées
+ * Recipes Tab - Bibliothèque de Recettes
+ * Affiche toutes les recettes sauvegardées de l'utilisateur
+ * La génération se fait maintenant via une pipeline dédiée
  */
 const RecipesTab: React.FC = () => {
   const navigate = useNavigate();
@@ -34,44 +33,23 @@ const RecipesTab: React.FC = () => {
   const { click, success } = useFeedback();
   const { showToast } = useToast();
 
-  // Store state
-  const {
-    recipeCandidates,
-    loadingState,
-    userEditedInventory,
-    generateRecipes,
-    clearRecipeCandidates,
-    startScan
-  } = useFridgeScanPipeline();
-
   // User state
   const { session, profile } = useUserStore();
   const userId = session?.user?.id;
-
-  // Meal plan store for inventory management
-  const {
-    availableInventories,
-    selectedInventoryId,
-    selectInventory,
-    loadAvailableInventories
-  } = useMealPlanStore();
 
   // Custom hooks for modular functionality
   const {
     persistedRecipes,
     loadingPersistedRecipes,
-    newlyGeneratedRecipes,
     allRecipes,
     handleToggleSaveStatus,
-    handleSaveAllNewRecipes,
-    handleDiscardNewRecipes,
     deleteRecipeFromDb
   } = useRecipeData({
     userId,
     profile,
-    userEditedInventory,
-    recipeCandidates,
-    clearRecipeCandidates,
+    userEditedInventory: [],
+    recipeCandidates: [],
+    clearRecipeCandidates: () => {},
     showToast,
     click,
     success
@@ -112,19 +90,6 @@ const RecipesTab: React.FC = () => {
     deleteRecipeFromDb
   });
 
-  // Load available inventories on mount
-  React.useEffect(() => {
-    if (userId) {
-      loadAvailableInventories();
-    }
-  }, [userId, loadAvailableInventories]);
-
-  // Calculate if we have a selected inventory with items
-  const hasSelectedInventory = React.useMemo(() => {
-    if (!selectedInventoryId) return false;
-    const selectedInventory = availableInventories.find(inv => inv.id === selectedInventoryId);
-    return selectedInventory && selectedInventory.inventory_final && selectedInventory.inventory_final.length > 0;
-  }, [selectedInventoryId, availableInventories]);
 
   // Handle recipe view
   const handleViewRecipe = (recipe: Recipe) => {
@@ -163,15 +128,8 @@ const RecipesTab: React.FC = () => {
     setSelectedRecipeForDetail(null);
   };
 
-  // Handle start fridge scan
-  const handleStartFridgeScan = () => {
-    startScan();
-    navigate('/fridge/scan');
-  };
-
-  const isGenerating = loadingState === 'generating' || loadingState === 'streaming';
   const hasRecipes = allRecipes.length > 0;
-  const isLoading = loadingPersistedRecipes || isGenerating;
+  const isLoading = loadingPersistedRecipes;
 
   return (
     <motion.div
@@ -180,44 +138,11 @@ const RecipesTab: React.FC = () => {
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="space-y-6"
     >
-      {/* En-tête de Génération */}
+      {/* CTA pour Générer des Recettes */}
+      <RecipeLibraryCTA />
+
+      {/* Filtres et Boutons d'Action */}
       {hasRecipes && !isLoading && (
-        <RecipeGenerationHeader
-          availableInventories={availableInventories}
-          selectedInventoryId={selectedInventoryId}
-          onSelectInventory={selectInventory}
-          onGenerateRecipes={() => {
-            const selectedInventory = availableInventories.find(inv => inv.id === selectedInventoryId);
-            if (selectedInventory && selectedInventory.inventory_final.length > 0) {
-              generateRecipes();
-            } else {
-              showToast({
-                type: 'warning',
-                title: 'Aucun inventaire sélectionné',
-                message: 'Veuillez sélectionner un inventaire avec des ingrédients pour générer des recettes.',
-                duration: 3000
-              });
-            }
-          }}
-          isGenerating={isGenerating}
-        />
-      )}
-
-      {/* Loader de génération */}
-      {isGenerating && !loadingPersistedRecipes && <RecipeGenerationLoader />}
-
-      {/* Recipe Validation CTA */}
-      {newlyGeneratedRecipes.length > 0 && (
-        <RecipeValidationCTA
-          newlyGeneratedRecipes={newlyGeneratedRecipes}
-          onSaveAllNewRecipes={handleSaveAllNewRecipes}
-          onDiscardNewRecipes={handleDiscardNewRecipes}
-          isGenerating={isGenerating}
-        />
-      )}
-
-      {/* En-tête avec Filtres et Boutons d'Action */}
-      {!isGenerating && hasRecipes && !isLoading && (
         <>
           <RecipeFilterSystem
             searchFilter={searchFilter}
@@ -246,24 +171,7 @@ const RecipesTab: React.FC = () => {
 
       {/* Contenu Principal */}
       {!hasRecipes && !isLoading ? (
-        <EmptyRecipesState 
-          selectedInventoryId={selectedInventoryId}
-          availableInventories={availableInventories}
-          hasSelectedInventory={hasSelectedInventory}
-          onGenerateRecipes={() => {
-            const selectedInventory = availableInventories.find(inv => inv.id === selectedInventoryId);
-            if (selectedInventory && selectedInventory.inventory_final.length > 0) {
-              generateRecipes();
-            } else {
-              showToast({
-                type: 'warning',
-                title: 'Aucun inventaire sélectionné',
-                message: 'Veuillez sélectionner un inventaire avec des ingrédients pour générer des recettes.',
-                duration: 3000
-              });
-            }
-          }}
-        />
+        <EmptyRecipesState />
       ) : (
         <div className="space-y-4">
           {/* État de Chargement Initial */}
@@ -300,23 +208,18 @@ const RecipesTab: React.FC = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <AnimatePresence>
-                  {displayedRecipes.map((recipe, index) => {
-                    const isSaved = persistedRecipes.some(r => r.id === recipe.id);
-                    const isNewlyGenerated = recipeCandidates.some(r => r.id === recipe.id) && !isSaved;
-
-                    return (
-                      <RecipeCard
-                        key={recipe.id}
-                        recipe={recipe}
-                        index={index}
-                        isSaved={isSaved}
-                        isNewlyGenerated={isNewlyGenerated}
-                        isLoading={recipe.status === 'loading'}
-                        onToggleSaveStatus={() => handleToggleSaveStatus(recipe)}
-                        onView={handleViewRecipe}
-                      />
-                    );
-                  })}
+                  {displayedRecipes.map((recipe, index) => (
+                    <RecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      index={index}
+                      isSaved={true}
+                      isNewlyGenerated={false}
+                      isLoading={recipe.status === 'loading'}
+                      onToggleSaveStatus={() => handleToggleSaveStatus(recipe)}
+                      onView={handleViewRecipe}
+                    />
+                  ))}
                 </AnimatePresence>
               </div>
 
