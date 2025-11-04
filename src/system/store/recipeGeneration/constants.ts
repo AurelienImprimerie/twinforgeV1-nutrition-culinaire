@@ -41,3 +41,30 @@ export const RECIPE_COUNT_OPTIONS = [
 
 // Storage key pour la persistence
 export const STORAGE_KEY = 'twinforge:recipe-generation:pipeline';
+
+// Options de cuisine
+export const CUISINE_TYPES = [
+  { value: 'french', label: 'Française' },
+  { value: 'italian', label: 'Italienne' },
+  { value: 'asian', label: 'Asiatique' },
+  { value: 'mediterranean', label: 'Méditerranéenne' },
+  { value: 'mexican', label: 'Mexicaine' },
+  { value: 'american', label: 'Américaine' },
+  { value: 'middle-eastern', label: 'Moyen-Orient' },
+  { value: 'indian', label: 'Indienne' }
+];
+
+// Options de difficulté
+export const DIFFICULTY_LEVELS = [
+  { value: 'easy', label: 'Facile', description: 'Recettes simples et rapides' },
+  { value: 'medium', label: 'Moyen', description: 'Techniques intermédiaires' },
+  { value: 'advanced', label: 'Avancé', description: 'Recettes élaborées' }
+];
+
+// Options de type de repas
+export const MEAL_TYPES = [
+  { value: 'breakfast', label: 'Petit-déjeuner' },
+  { value: 'lunch', label: 'Déjeuner' },
+  { value: 'dinner', label: 'Dîner' },
+  { value: 'snack', label: 'Collation' }
+];

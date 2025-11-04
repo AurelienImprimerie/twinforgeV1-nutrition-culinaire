@@ -1,18 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePerformanceMode } from '../../../../system/context/PerformanceModeContext';
 import GlassCard from '../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../ui/icons/registry';
 import CustomDropdown from '../../../pages/Fridge/tabs/RecipesTab/components/CustomDropdown';
-import { RECIPE_COUNT_OPTIONS } from '../../../../system/store/recipeGeneration';
+import {
+  RECIPE_COUNT_OPTIONS,
+  CUISINE_TYPES,
+  DIFFICULTY_LEVELS,
+  MEAL_TYPES
+} from '../../../../system/store/recipeGeneration';
 
 interface ConfigurationStageProps {
   availableInventories: any[];
   selectedInventoryId: string | null;
   recipeCount: number;
+  cuisineTypes?: string[];
+  difficultyLevel?: 'easy' | 'medium' | 'advanced';
+  maxPrepTime?: number;
+  mealTypes?: string[];
   onSelectInventory: (inventoryId: string) => void;
   onSetRecipeCount: (count: number) => void;
+  onSetCuisineTypes: (types: string[]) => void;
+  onSetDifficultyLevel: (level: 'easy' | 'medium' | 'advanced') => void;
+  onSetMaxPrepTime: (time: number) => void;
+  onSetMealTypes: (types: string[]) => void;
   onGenerate: () => void;
   isGenerating: boolean;
 }
@@ -21,31 +34,60 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
   availableInventories,
   selectedInventoryId,
   recipeCount,
+  cuisineTypes = [],
+  difficultyLevel = 'medium',
+  maxPrepTime = 60,
+  mealTypes = [],
   onSelectInventory,
   onSetRecipeCount,
+  onSetCuisineTypes,
+  onSetDifficultyLevel,
+  onSetMaxPrepTime,
+  onSetMealTypes,
   onGenerate,
   isGenerating
 }) => {
   const { isPerformanceMode } = usePerformanceMode();
   const MotionDiv = isPerformanceMode ? 'div' : motion.div;
 
+  // Auto-select the latest inventory on mount
+  useEffect(() => {
+    if (!selectedInventoryId && availableInventories.length > 0) {
+      const latestInventory = availableInventories.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
+      onSelectInventory(latestInventory.id);
+    }
+  }, [availableInventories, selectedInventoryId, onSelectInventory]);
+
   const selectedInventory = availableInventories.find(inv => inv.id === selectedInventoryId);
   const hasValidInventory = selectedInventory && selectedInventory.inventory_final?.length > 0;
-
-  const inventoryOptions = availableInventories.map(inventory => ({
-    value: inventory.id,
-    label: `Inventaire du ${new Date(inventory.created_at).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })} (${inventory.inventory_final?.length || 0} ingrédients)`,
-    subtitle: new Date(inventory.created_at).toLocaleDateString('fr-FR')
-  }));
 
   const recipeCountOptions = RECIPE_COUNT_OPTIONS.map(option => ({
     value: option.value.toString(),
     label: option.label
   }));
+
+  const difficultyOptions = DIFFICULTY_LEVELS.map(level => ({
+    value: level.value,
+    label: level.label
+  }));
+
+  const toggleCuisineType = (type: string) => {
+    if (cuisineTypes.includes(type)) {
+      onSetCuisineTypes(cuisineTypes.filter(t => t !== type));
+    } else {
+      onSetCuisineTypes([...cuisineTypes, type]);
+    }
+  };
+
+  const toggleMealType = (type: string) => {
+    if (mealTypes.includes(type)) {
+      onSetMealTypes(mealTypes.filter(t => t !== type));
+    } else {
+      onSetMealTypes([...mealTypes, type]);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -110,36 +152,58 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                 >
                   Configurez votre Génération
                 </h2>
-                <p className="text-white/80 text-lg">
-                  Choisissez votre inventaire et le nombre de recettes à générer
-                </p>
+                <div className="text-white/80 text-lg">
+                  Personnalisez vos recettes selon vos préférences
+                </div>
               </div>
             </div>
 
+            {/* Current Inventory Info */}
+            {hasValidInventory && (
+              <MotionDiv
+                {...(!isPerformanceMode && {
+                  initial: { opacity: 0 },
+                  animate: { opacity: 1 }
+                })}
+                className="p-4 rounded-xl"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <SpatialIcon Icon={ICONS.Package} size={24} className="text-green-400" />
+                  <div className="flex-1">
+                    <div className="text-white font-semibold">Inventaire utilisé</div>
+                    <div className="text-white/70 text-sm">
+                      Scan du {new Date(selectedInventory.created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })} • {selectedInventory.inventory_final.length} ingrédients
+                    </div>
+                  </div>
+                </div>
+              </MotionDiv>
+            )}
+
+            {!availableInventories.length && (
+              <div className="p-4 rounded-xl" style={{
+                background: 'rgba(251, 191, 36, 0.1)',
+                border: '1px solid rgba(251, 191, 36, 0.3)'
+              }}>
+                <div className="flex items-center gap-3">
+                  <SpatialIcon Icon={ICONS.AlertTriangle} size={20} className="text-amber-400" />
+                  <div className="text-amber-400 text-sm">
+                    Aucun inventaire disponible. Scannez votre frigo pour commencer !
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Configuration Form */}
             <div className="space-y-6">
-              {/* Inventory Selection */}
-              <div className="space-y-3">
-                <label className="block text-white font-semibold text-sm">
-                  Sélectionner un inventaire
-                </label>
-                <CustomDropdown
-                  options={inventoryOptions}
-                  value={selectedInventoryId || ''}
-                  onChange={onSelectInventory}
-                  placeholder="Sélectionner un inventaire"
-                  className="w-full"
-                  disabled={isGenerating}
-                />
-                {!availableInventories.length && (
-                  <p className="text-amber-400 text-sm flex items-center gap-2">
-                    <SpatialIcon Icon={ICONS.AlertTriangle} size={16} />
-                    Aucun inventaire disponible. Scannez votre frigo pour commencer !
-                  </p>
-                )}
-              </div>
-
-              {/* Recipe Count Selection */}
+              {/* Recipe Count */}
               <div className="space-y-3">
                 <label className="block text-white font-semibold text-sm">
                   Nombre de recettes
@@ -154,30 +218,90 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                 />
               </div>
 
-              {/* Selected Inventory Info */}
-              {hasValidInventory && (
-                <MotionDiv
-                  {...(!isPerformanceMode && {
-                    initial: { opacity: 0 },
-                    animate: { opacity: 1 }
-                  })}
-                  className="p-4 rounded-xl"
+              {/* Cuisine Types */}
+              <div className="space-y-3">
+                <label className="block text-white font-semibold text-sm">
+                  Types de cuisine (optionnel)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CUISINE_TYPES.map((cuisine) => (
+                    <button
+                      key={cuisine.value}
+                      onClick={() => toggleCuisineType(cuisine.value)}
+                      disabled={isGenerating}
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                        cuisineTypes.includes(cuisine.value)
+                          ? 'bg-green-500/20 text-green-300 border-2 border-green-400/50'
+                          : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {cuisine.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Difficulty Level */}
+              <div className="space-y-3">
+                <label className="block text-white font-semibold text-sm">
+                  Niveau de difficulté
+                </label>
+                <CustomDropdown
+                  options={difficultyOptions}
+                  value={difficultyLevel}
+                  onChange={(value) => onSetDifficultyLevel(value as 'easy' | 'medium' | 'advanced')}
+                  placeholder="Niveau de difficulté"
+                  className="w-full"
+                  disabled={isGenerating}
+                />
+              </div>
+
+              {/* Max Prep Time Slider */}
+              <div className="space-y-3">
+                <label className="block text-white font-semibold text-sm">
+                  Temps de préparation max: {maxPrepTime} min
+                </label>
+                <input
+                  type="range"
+                  min="15"
+                  max="120"
+                  step="15"
+                  value={maxPrepTime}
+                  onChange={(e) => onSetMaxPrepTime(parseInt(e.target.value))}
+                  disabled={isGenerating}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                    background: `linear-gradient(to right, #10B981 0%, #10B981 ${((maxPrepTime - 15) / (120 - 15)) * 100}%, rgba(255,255,255,0.1) ${((maxPrepTime - 15) / (120 - 15)) * 100}%, rgba(255,255,255,0.1) 100%)`
                   }}
-                >
-                  <div className="flex items-center gap-3">
-                    <SpatialIcon Icon={ICONS.Check} size={20} className="text-green-400" />
-                    <div>
-                      <p className="text-white font-medium">Inventaire sélectionné</p>
-                      <p className="text-white/70 text-sm">
-                        {selectedInventory.inventory_final.length} ingrédients disponibles
-                      </p>
-                    </div>
-                  </div>
-                </MotionDiv>
-              )}
+                />
+                <div className="flex justify-between text-xs text-white/50">
+                  <span>15 min</span>
+                  <span>120 min</span>
+                </div>
+              </div>
+
+              {/* Meal Types */}
+              <div className="space-y-3">
+                <label className="block text-white font-semibold text-sm">
+                  Types de repas (optionnel)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {MEAL_TYPES.map((meal) => (
+                    <button
+                      key={meal.value}
+                      onClick={() => toggleMealType(meal.value)}
+                      disabled={isGenerating}
+                      className={`px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                        mealTypes.includes(meal.value)
+                          ? 'bg-green-500/20 text-green-300 border-2 border-green-400/50'
+                          : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {meal.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Generate Button */}
@@ -228,55 +352,84 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
         </GlassCard>
       </MotionDiv>
 
-      {/* Benefits Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {
-            icon: ICONS.Sparkles,
-            title: 'IA Personnalisée',
-            description: 'Recettes adaptées à vos goûts et contraintes'
-          },
-          {
-            icon: ICONS.Clock,
-            title: 'Rapide',
-            description: 'Génération en quelques secondes'
-          },
-          {
-            icon: ICONS.Check,
-            title: 'Zéro Gaspillage',
-            description: 'Utilisez tous vos ingrédients disponibles'
-          }
-        ].map((benefit, index) => (
-          <MotionDiv
-            key={index}
-            {...(!isPerformanceMode && {
-              initial: { opacity: 0, y: 20 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.3, delay: 0.3 + index * 0.1 }
-            })}
-          >
-            <GlassCard
-              className="p-4 text-center"
-              style={{
-                background: 'rgba(16, 185, 129, 0.05)',
-                borderColor: 'rgba(16, 185, 129, 0.2)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-              }}
-            >
-              <SpatialIcon
-                Icon={benefit.icon}
-                size={32}
-                className="mx-auto mb-3 text-green-400"
-                style={{
-                  filter: 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.6))'
-                }}
-              />
-              <h3 className="text-white font-semibold mb-2">{benefit.title}</h3>
-              <p className="text-white/70 text-sm">{benefit.description}</p>
-            </GlassCard>
-          </MotionDiv>
-        ))}
-      </div>
+      {/* How it Works Explanation Card */}
+      <MotionDiv
+        {...(!isPerformanceMode && {
+          initial: { opacity: 0, y: 20 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.5, delay: 0.2 }
+        })}
+      >
+        <GlassCard
+          className="p-6"
+          style={{
+            background: 'rgba(16, 185, 129, 0.05)',
+            borderColor: 'rgba(16, 185, 129, 0.2)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-4">
+              <SpatialIcon Icon={ICONS.Info} size={24} className="text-green-400" />
+              <h3 className="text-xl font-bold text-white">Comment ça marche ?</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-green-400 font-bold text-sm">1</span>
+                </div>
+                <div>
+                  <div className="text-white font-semibold mb-1">Inventaire automatique</div>
+                  <div className="text-white/70 text-sm">
+                    Nous utilisons automatiquement votre dernier scan de frigo pour garantir des recettes
+                    avec les ingrédients que vous avez sous la main.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-green-400 font-bold text-sm">2</span>
+                </div>
+                <div>
+                  <div className="text-white font-semibold mb-1">IA personnalisée</div>
+                  <div className="text-white/70 text-sm">
+                    Notre Forge Spatiale analyse votre profil nutritionnel, vos préférences culinaires
+                    et vos contraintes pour créer des recettes sur mesure.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-green-400 font-bold text-sm">3</span>
+                </div>
+                <div>
+                  <div className="text-white font-semibold mb-1">Zéro gaspillage</div>
+                  <div className="text-white/70 text-sm">
+                    Les recettes générées privilégient l'utilisation optimale de vos ingrédients,
+                    en tenant compte de leur fraîcheur pour minimiser le gaspillage.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-green-400 font-bold text-sm">4</span>
+                </div>
+                <div>
+                  <div className="text-white font-semibold mb-1">Variété garantie</div>
+                  <div className="text-white/70 text-sm">
+                    L'IA évite les répétitions en tenant compte de vos recettes déjà générées
+                    pour vous proposer toujours de nouvelles idées.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      </MotionDiv>
     </div>
   );
 };

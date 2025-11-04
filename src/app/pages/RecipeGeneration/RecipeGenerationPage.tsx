@@ -81,6 +81,30 @@ const RecipeGenerationPage: React.FC = () => {
     });
   };
 
+  // Handle cuisine types change
+  const handleSetCuisineTypes = (types: string[]) => {
+    click();
+    setConfig({ cuisineTypes: types });
+  };
+
+  // Handle difficulty level change
+  const handleSetDifficultyLevel = (level: 'easy' | 'medium' | 'advanced') => {
+    click();
+    setConfig({ difficultyLevel: level });
+  };
+
+  // Handle max prep time change
+  const handleSetMaxPrepTime = (time: number) => {
+    click();
+    setConfig({ maxPrepTime: time });
+  };
+
+  // Handle meal types change
+  const handleSetMealTypes = (types: string[]) => {
+    click();
+    setConfig({ mealTypes: types });
+  };
+
   // Handle generation
   const handleGenerate = async () => {
     click();
@@ -233,24 +257,22 @@ const RecipeGenerationPage: React.FC = () => {
         loadingMessage={loadingMessage}
       />
 
-      {/* Exit Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleExit}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200"
-        >
-          Quitter
-        </button>
-      </div>
-
       {/* Stage Content */}
       {currentStep === 'configuration' && (
         <ConfigurationStage
           availableInventories={availableInventories}
           selectedInventoryId={config.selectedInventoryId}
           recipeCount={config.recipeCount}
+          cuisineTypes={config.cuisineTypes}
+          difficultyLevel={config.difficultyLevel}
+          maxPrepTime={config.maxPrepTime}
+          mealTypes={config.mealTypes}
           onSelectInventory={handleSelectInventory}
           onSetRecipeCount={handleSetRecipeCount}
+          onSetCuisineTypes={handleSetCuisineTypes}
+          onSetDifficultyLevel={handleSetDifficultyLevel}
+          onSetMaxPrepTime={handleSetMaxPrepTime}
+          onSetMealTypes={handleSetMealTypes}
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
         />
