@@ -361,8 +361,12 @@ const ProjectionTab: React.FC = () => {
       {/* Modal de sauvegarde */}
       {showSaveModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{
+            zIndex: 'var(--z-modal-backdrop)',
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(10px)'
+          }}
           onClick={() => setShowSaveModal(false)}
         >
           <ConditionalMotion
@@ -370,6 +374,7 @@ const ProjectionTab: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            style={{ zIndex: 'var(--z-modal)', position: 'relative' }}
           >
             <GlassCard className="p-6 max-w-md w-full">
               <div className="flex items-center justify-between mb-4">
