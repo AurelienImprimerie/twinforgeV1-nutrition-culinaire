@@ -86,10 +86,14 @@ export interface MealPlanGenerationPipelineState {
   setConfig: (config: Partial<MealPlanGenerationConfig>) => void;
   generateMealPlans: () => Promise<void>;
   generateDetailedRecipes: () => Promise<void>;
-  saveMealPlans: () => Promise<void>;
+  saveMealPlans: (withRecipes: boolean) => Promise<void>;
   discardMealPlans: () => void;
   resetPipeline: () => void;
-  setLoadingState: (state: 'idle' | 'generating' | 'streaming' | 'generating_recipes' | 'streaming_recipes') => void;
+  setLoadingState: (state: 'idle' | 'generating' | 'streaming' | 'generating_recipes' | 'streaming_recipes' | 'saving') => void;
   updateMealPlanStatus: (planId: string, status: 'loading' | 'ready') => void;
   updateMealStatus: (planId: string, mealId: string, status: 'loading' | 'ready', recipe?: Recipe) => void;
+
+  // Progress persistence actions
+  loadProgressFromDatabase: () => Promise<boolean>;
+  clearSavedProgress: () => Promise<void>;
 }

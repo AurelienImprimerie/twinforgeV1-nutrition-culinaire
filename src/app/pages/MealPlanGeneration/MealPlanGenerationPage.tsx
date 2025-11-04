@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useMealPlanGenerationPipeline } from '../../../system/store/mealPlanGenerationPipeline';
@@ -12,6 +12,8 @@ import GeneratingStage from './stages/GeneratingStage';
 import ValidationStage from './stages/ValidationStage';
 import RecipeDetailsGeneratingStage from './stages/RecipeDetailsGeneratingStage';
 import RecipeDetailsValidationStage from './stages/RecipeDetailsValidationStage';
+import ResumeProgressModal from './components/ResumeProgressModal';
+import { mealPlanProgressService } from '../../../system/services/mealPlanProgressService';
 import logger from '../../../lib/utils/logger';
 
 const MealPlanGenerationPage: React.FC = () => {
@@ -19,6 +21,8 @@ const MealPlanGenerationPage: React.FC = () => {
   const { click, success } = useFeedback();
   const { showToast } = useToast();
   const { session } = useUserStore();
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [savedSessionInfo, setSavedSessionInfo] = useState<any>(null);
 
   const {
     currentStep,
@@ -36,7 +40,9 @@ const MealPlanGenerationPage: React.FC = () => {
     generateDetailedRecipes,
     saveMealPlans,
     discardMealPlans,
-    resetPipeline
+    resetPipeline,
+    loadProgressFromDatabase,
+    clearSavedProgress
   } = useMealPlanGenerationPipeline();
 
   const {
@@ -45,10 +51,27 @@ const MealPlanGenerationPage: React.FC = () => {
   } = useMealPlanStore();
 
   useEffect(() => {
-    if (!isActive) {
-      startPipeline();
-    }
-  }, []);
+    const checkSavedProgress = async () => {
+      if (session?.user?.id) {
+        const summary = await mealPlanProgressService.getProgressSummary(session.user.id);
+
+        if (summary.hasSession && (summary.currentStep === 'validation' || summary.currentStep === 'recipe_details_validation')) {
+          setSavedSessionInfo({
+            currentStep: summary.currentStep,
+            sessionId: summary.sessionId,
+            updatedAt: summary.updatedAt
+          });
+          setShowResumeModal(true);
+        } else if (!isActive) {
+          startPipeline();
+        }
+      } else if (!isActive) {
+        startPipeline();
+      }
+    };
+
+    checkSavedProgress();
+  }, [session?.user?.id, isActive, startPipeline]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -174,6 +197,45 @@ const MealPlanGenerationPage: React.FC = () => {
     }
   };
 
+  const handleResumeProgress = async () => {
+    click();
+    setShowResumeModal(false);
+
+    const success = await loadProgressFromDatabase();
+    if (success) {
+      showToast({
+        type: 'success',
+        title: 'Progression restaurée',
+        message: 'Votre génération en cours a été restaurée avec succès',
+        duration: 3000
+      });
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Erreur de restauration',
+        message: 'Impossible de restaurer la progression',
+        duration: 3000
+      });
+      startPipeline();
+    }
+  };
+
+  const handleRestartFromScratch = async () => {
+    click();
+    setShowResumeModal(false);
+
+    await clearSavedProgress();
+    resetPipeline();
+    startPipeline();
+
+    showToast({
+      type: 'info',
+      title: 'Nouvelle génération',
+      message: 'Démarrage d\'une nouvelle génération',
+      duration: 3000
+    });
+  };
+
   const handleExit = () => {
     click();
 
@@ -195,7 +257,17 @@ const MealPlanGenerationPage: React.FC = () => {
   const currentMealPlan = mealPlanCandidates.length > 0 ? mealPlanCandidates[0] : null;
 
   return (
-    <motion.div
+    <>
+      <ResumeProgressModal
+        isOpen={showResumeModal}
+        currentStep={savedSessionInfo?.currentStep}
+        sessionId={savedSessionInfo?.sessionId}
+        updatedAt={savedSessionInfo?.updatedAt}
+        onResume={handleResumeProgress}
+        onRestart={handleRestartFromScratch}
+      />
+
+      <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -249,7 +321,8 @@ const MealPlanGenerationPage: React.FC = () => {
           onExit={handleExit}
         />
       )}
-    </motion.div>
+      </motion.div>
+    </>
   );
 };
 

@@ -4,14 +4,17 @@ import { supabase } from '../../../supabase/client';
 import { useUserStore } from '../../userStore';
 import logger from '../../../../lib/utils/logger';
 import { nanoid } from 'nanoid';
+import { mealPlanProgressService } from '../../../services/mealPlanProgressService';
 
 export interface GenerationActions {
   generateMealPlans: () => Promise<void>;
   generateDetailedRecipes: () => Promise<void>;
-  saveMealPlans: () => Promise<void>;
+  saveMealPlans: (withRecipes: boolean) => Promise<void>;
   discardMealPlans: () => void;
   updateMealPlanStatus: (planId: string, status: 'loading' | 'ready') => void;
   updateMealStatus: (planId: string, mealId: string, status: 'loading' | 'ready', recipe?: any) => void;
+  loadProgressFromDatabase: () => Promise<boolean>;
+  clearSavedProgress: () => Promise<void>;
 }
 
 export const createGenerationActions = (
@@ -451,7 +454,7 @@ export const createGenerationActions = (
     }
   },
 
-  saveMealPlans: async () => {
+  saveMealPlans: async (withRecipes: boolean) => {
     const state = get();
     const { mealPlanCandidates, currentSessionId, config } = state;
     const { session } = useUserStore.getState();
@@ -460,6 +463,8 @@ export const createGenerationActions = (
     if (!userId) {
       throw new Error('Utilisateur non authentifié');
     }
+
+    set({ loadingState: 'saving' });
 
     logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Saving meal plans', {
       planCount: mealPlanCandidates.length,
@@ -504,6 +509,20 @@ export const createGenerationActions = (
         planCount: mealPlanCandidates.length,
         sessionId: currentSessionId,
         timestamp: new Date().toISOString()
+      });
+
+      // Mark session as completed and clean up progress
+      if (currentSessionId) {
+        await mealPlanProgressService.markSessionCompleted(currentSessionId);
+      }
+
+      // Reset pipeline after successful save
+      set({
+        mealPlanCandidates: [],
+        currentStep: 'configuration',
+        simulatedOverallProgress: 0,
+        loadingState: 'idle',
+        currentSessionId: null
       });
 
     } catch (error) {
@@ -559,5 +578,91 @@ export const createGenerationActions = (
           : p
       )
     }));
+  },
+
+  loadProgressFromDatabase: async () => {
+    const { session } = useUserStore.getState();
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Cannot load progress: User not authenticated');
+      return false;
+    }
+
+    try {
+      const summary = await mealPlanProgressService.getProgressSummary(userId);
+
+      if (!summary.hasSession || !summary.sessionId) {
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'No saved progress found');
+        return false;
+      }
+
+      logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Loading progress from database', {
+        sessionId: summary.sessionId,
+        currentStep: summary.currentStep
+      });
+
+      if (summary.currentStep === 'validation') {
+        const data = await mealPlanProgressService.loadValidationProgress(summary.sessionId);
+        if (!data) return false;
+
+        set({
+          currentSessionId: summary.sessionId,
+          config: data.config,
+          mealPlanCandidates: data.mealPlans,
+          currentStep: 'validation',
+          isActive: true,
+          loadingState: 'idle',
+          simulatedOverallProgress: 60
+        });
+
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Validation progress loaded successfully');
+        return true;
+      }
+
+      if (summary.currentStep === 'recipe_details_validation') {
+        const data = await mealPlanProgressService.loadRecipesProgress(summary.sessionId);
+        if (!data) return false;
+
+        set({
+          currentSessionId: summary.sessionId,
+          config: data.config,
+          mealPlanCandidates: data.mealPlans,
+          currentStep: 'recipe_details_validation',
+          isActive: true,
+          loadingState: 'idle',
+          simulatedOverallProgress: 90
+        });
+
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Recipe details progress loaded successfully');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Failed to load progress from database', { error });
+      return false;
+    }
+  },
+
+  clearSavedProgress: async () => {
+    const state = get();
+    const { currentSessionId } = state;
+    const { session } = useUserStore.getState();
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Cannot clear progress: User not authenticated');
+      return;
+    }
+
+    try {
+      if (currentSessionId) {
+        await mealPlanProgressService.deleteProgress(currentSessionId);
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Saved progress cleared', { sessionId: currentSessionId });
+      }
+    } catch (error) {
+      logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Failed to clear saved progress', { error });
+    }
   }
 });
