@@ -318,6 +318,16 @@ export const createGenerationActions = (
     });
 
     try {
+      // Count total meals first
+      let totalMeals = 0;
+      let processedMeals = 0;
+
+      for (const plan of mealPlanCandidates) {
+        for (const day of plan.days) {
+          totalMeals += day.meals?.length || 0;
+        }
+      }
+
       // Get user profile for preferences
       const { data: profileData } = await supabase
         .from('user_profile')
@@ -346,16 +356,6 @@ export const createGenerationActions = (
       });
 
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipe-detail-generator`;
-
-      let totalMeals = 0;
-      let processedMeals = 0;
-
-      // Count total meals
-      for (const plan of mealPlanCandidates) {
-        for (const day of plan.days) {
-          totalMeals += day.meals?.length || 0;
-        }
-      }
 
       // Generate recipes for each meal with streaming
       for (const plan of mealPlanCandidates) {

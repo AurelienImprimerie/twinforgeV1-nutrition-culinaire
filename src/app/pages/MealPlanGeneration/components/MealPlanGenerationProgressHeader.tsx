@@ -102,13 +102,6 @@ const MealPlanGenerationProgressHeader: React.FC<MealPlanGenerationProgressHeade
           </div>
         </div>
       </GlassCard>
-
-      {/* Loading message */}
-      {loadingMessage && (
-        <div className="mt-3 text-sm text-gray-300 animate-pulse text-center">
-          {loadingMessage}
-        </div>
-      )}
     </div>
   );
 };

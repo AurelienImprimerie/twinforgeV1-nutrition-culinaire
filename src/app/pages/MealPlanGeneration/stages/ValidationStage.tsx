@@ -167,8 +167,17 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                 {/* Days Grid with Meal Names */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {weekDays.map((day, dayIndex) => (
-                    <div
-                      key={`day-${dayIndex}`}
+                    <MotionDiv
+                      key={`day-${day.date}-${dayIndex}`}
+                      {...(!isPerformanceMode && {
+                        initial: { opacity: 0, y: 15 },
+                        animate: { opacity: 1, y: 0 },
+                        transition: {
+                          duration: 0.3,
+                          delay: (weekIndex * 7 + dayIndex) * 0.05,
+                          ease: 'easeOut'
+                        }
+                      })}
                       className="p-4 rounded-lg"
                       style={{
                         background: 'rgba(139, 92, 246, 0.05)',
@@ -233,7 +242,7 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                           );
                         })}
                       </div>
-                    </div>
+                    </MotionDiv>
                   ))}
                 </div>
               </GlassCard>

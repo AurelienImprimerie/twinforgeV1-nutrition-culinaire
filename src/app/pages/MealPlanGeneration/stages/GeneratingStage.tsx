@@ -252,14 +252,18 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
 
               {/* Days Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {/* Show generated days */}
+                {/* Show generated days with staggered animation */}
                 {currentPlan.days.map((day, index) => (
                   <MotionDiv
-                    key={`day-${index}`}
+                    key={`day-${day.date}-${index}`}
                     {...(!isPerformanceMode && {
-                      initial: { opacity: 0, scale: 0.95 },
-                      animate: { opacity: 1, scale: 1 },
-                      transition: { duration: 0.3, delay: index * 0.1 }
+                      initial: { opacity: 0, y: 20, scale: 0.95 },
+                      animate: { opacity: 1, y: 0, scale: 1 },
+                      transition: {
+                        duration: 0.4,
+                        delay: index * 0.15,
+                        ease: [0.4, 0, 0.2, 1]
+                      }
                     })}
                     className="p-4 rounded-lg"
                     style={{

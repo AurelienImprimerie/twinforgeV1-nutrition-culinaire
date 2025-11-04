@@ -106,6 +106,8 @@ export const ICONS = {
   Clapperboard: L.Clapperboard,
   PlaySquare: L.PlaySquare,
   Coffee: L.Coffee,
+  Cookie: L.Cookie,
+  UtensilsCrossed: L.UtensilsCrossed,
   Droplet: L.Droplet,
   CookingPot: L.CookingPot,
 
