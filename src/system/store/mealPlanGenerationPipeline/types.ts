@@ -3,6 +3,7 @@ import type { Recipe } from '../../../domain/recipe';
 export type MealPlanGenerationStep =
   | 'configuration'
   | 'generating'
+  | 'enriching'
   | 'validation';
 
 export interface MealPlanGenerationStepData {

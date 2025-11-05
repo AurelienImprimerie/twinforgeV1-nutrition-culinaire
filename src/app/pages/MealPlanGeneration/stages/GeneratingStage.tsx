@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { usePerformanceMode } from '../../../../system/context/PerformanceModeContext';
 import { useMealPlanGenerationPipeline } from '../../../../system/store/mealPlanGenerationPipeline';
+import { useRecipeImageRealtime } from '../../../../hooks/useRecipeImageRealtime';
 import GlassCard from '../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../ui/icons/registry';
 import SkeletonBase from '../../../../ui/components/skeletons/SkeletonBase';
+import MealPlanRecipeCard from '../components/MealPlanRecipeCard';
 
 interface GeneratingStageProps {
   onExit: () => void;
@@ -38,6 +40,24 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
   React.useEffect(() => {
     // This effect ensures the component re-renders when state updates
   }, [lastStateUpdate, receivedDaysCount, mealPlanCandidates]);
+
+  // Collect all recipe IDs for realtime image listening
+  const recipeIds = useMemo(() => {
+    const ids: string[] = [];
+    mealPlanCandidates.forEach(plan => {
+      plan.days.forEach(day => {
+        day.meals?.forEach(meal => {
+          if (meal.detailedRecipe?.id) {
+            ids.push(meal.detailedRecipe.id);
+          }
+        });
+      });
+    });
+    return ids;
+  }, [mealPlanCandidates]);
+
+  // Listen for real-time image updates
+  useRecipeImageRealtime(isStreaming, recipeIds);
 
   // Generate dynamic title and subtitle based on progress
   const getDynamicTitle = (): string => {
@@ -352,78 +372,98 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
                 </motion.div>
               </div>
 
-              {/* Days Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {/* Show generated days with staggered animation */}
-                {currentPlan.days.map((day, index) => (
-                  <MotionDiv
-                    key={`day-${day.date}-${index}`}
-                    {...(!isPerformanceMode && {
-                      initial: { opacity: 0, y: 20, scale: 0.95 },
-                      animate: { opacity: 1, y: 0, scale: 1 },
-                      transition: {
-                        duration: 0.4,
-                        delay: index * 0.15,
-                        ease: [0.4, 0, 0.2, 1]
-                      }
-                    })}
-                    className="p-4 rounded-lg"
-                    style={{
-                      background: 'rgba(139, 92, 246, 0.08)',
-                      border: '1px solid rgba(139, 92, 246, 0.2)'
-                    }}
-                  >
-                    <div className="font-semibold text-white mb-3 text-sm">
-                      {new Date(day.date).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'short'
+              {/* Rich Recipe Cards Grid - Progressive Display */}
+              <div className="space-y-8">
+                {currentPlan.days.map((day, dayIndex) => (
+                  <div key={`day-${day.date}-${dayIndex}`}>
+                    {/* Day Header */}
+                    <MotionDiv
+                      {...(!isPerformanceMode && {
+                        initial: { opacity: 0, x: -20 },
+                        animate: { opacity: 1, x: 0 },
+                        transition: { duration: 0.4, delay: dayIndex * 0.1 }
                       })}
-                    </div>
-                    <div className="space-y-2">
+                      className="flex items-center gap-3 mb-4"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2))',
+                          border: '1.5px solid rgba(139, 92, 246, 0.4)'
+                        }}
+                      >
+                        <SpatialIcon Icon={ICONS.Calendar} size={20} className="text-violet-300" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-bold text-lg">
+                          {new Date(day.date).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
+                          })}
+                        </h4>
+                        <p className="text-white/60 text-xs">
+                          Jour {dayIndex + 1} - {day.meals?.filter(m => m.recipeGenerated).length || 0}/{day.meals?.length || 0} repas enrichis
+                        </p>
+                      </div>
+                    </MotionDiv>
+
+                    {/* Meals Grid with Rich Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                       {day.meals?.map((meal, mealIndex) => {
-                        const mealIcons = {
-                          breakfast: ICONS.Coffee,
-                          lunch: ICONS.UtensilsCrossed,
-                          dinner: ICONS.UtensilsCrossed,
-                          snack: ICONS.Cookie
-                        };
+                        const isGenerated = meal.recipeGenerated && meal.status === 'ready';
                         return (
-                          <div
-                            key={`meal-${mealIndex}`}
-                            className="flex items-start gap-2 p-2 rounded"
-                            style={{ background: 'rgba(139, 92, 246, 0.08)' }}
-                          >
-                            <SpatialIcon
-                              Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
-                              size={14}
-                              className="text-violet-400 mt-0.5 flex-shrink-0"
-                            />
-                            <p className="text-white/90 text-sm font-medium leading-tight">
-                              {meal.name}
-                            </p>
-                          </div>
+                          <MealPlanRecipeCard
+                            key={`meal-${dayIndex}-${mealIndex}`}
+                            meal={meal}
+                            dayIndex={dayIndex}
+                            isGenerated={isGenerated}
+                          />
                         );
                       })}
                     </div>
-                  </MotionDiv>
+                  </div>
                 ))}
 
-                {/* Show skeleton placeholders for remaining days */}
-                {Array.from({ length: totalDays - receivedDays }).map((_, index) => (
-                  <div
-                    key={`skeleton-${index}`}
-                    className="p-4 rounded-lg"
-                    style={{
-                      background: 'rgba(139, 92, 246, 0.05)',
-                      border: '1px solid rgba(139, 92, 246, 0.1)'
-                    }}
-                  >
-                    <SkeletonBase width="60%" height="16px" className="mb-3" />
-                    <div className="space-y-2">
-                      <SkeletonBase width="100%" height="32px" />
-                      <SkeletonBase width="100%" height="32px" />
-                      <SkeletonBase width="100%" height="32px" />
+                {/* Skeleton Days for Remaining Generation */}
+                {Array.from({ length: totalDays - receivedDays }).map((_, skeletonDayIndex) => (
+                  <div key={`skeleton-day-${skeletonDayIndex}`}>
+                    {/* Day Header Skeleton */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <SkeletonBase width="40px" height="40px" borderRadius="8px" />
+                      <div className="flex-1">
+                        <SkeletonBase width="180px" height="20px" className="mb-1" />
+                        <SkeletonBase width="120px" height="14px" />
+                      </div>
+                    </div>
+
+                    {/* Skeleton Meal Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {[0, 1, 2].map((skeletonMealIndex) => (
+                        <div
+                          key={`skeleton-meal-${skeletonDayIndex}-${skeletonMealIndex}`}
+                          className="rounded-xl overflow-hidden"
+                          style={{
+                            background: 'rgba(139, 92, 246, 0.05)',
+                            border: '1.5px solid rgba(139, 92, 246, 0.15)'
+                          }}
+                        >
+                          <SkeletonBase width="100%" height="192px" borderRadius="0" />
+                          <div className="p-4">
+                            <SkeletonBase width="80%" height="20px" className="mb-3" />
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                              <SkeletonBase width="100%" height="48px" />
+                              <SkeletonBase width="100%" height="48px" />
+                              <SkeletonBase width="100%" height="48px" />
+                              <SkeletonBase width="100%" height="48px" />
+                            </div>
+                            <div className="flex gap-1.5">
+                              <SkeletonBase width="60px" height="24px" borderRadius="12px" />
+                              <SkeletonBase width="70px" height="24px" borderRadius="12px" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
