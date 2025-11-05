@@ -141,6 +141,7 @@ export const createPlanDataActions = (
         .from('meal_plans')
         .select('*')
         .eq('user_id', user.id)
+        .eq('is_archived', false)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -148,15 +149,23 @@ export const createPlanDataActions = (
       }
 
       // Transform the data to match MealPlanData interface
-      const transformedPlans: MealPlanData[] = (mealPlans || []).map(plan => ({
-        id: plan.id,
-        weekNumber: 1, // Default value, could be extracted from plan_data if available
-        startDate: plan.created_at,
-        days: [], // Would need to be populated from plan_data
-        createdAt: plan.created_at,
-        updatedAt: plan.updated_at,
-        // Add other properties as needed from plan_data
-      }));
+      const transformedPlans: MealPlanData[] = (mealPlans || []).map(plan => {
+        // Extract plan_data (JSONB column containing the actual plan)
+        const planData = plan.plan_data || {};
+
+        return {
+          id: plan.id,
+          weekNumber: planData.weekNumber || 1,
+          startDate: planData.startDate || plan.start_date || plan.created_at,
+          days: planData.days || [],
+          createdAt: plan.created_at,
+          updatedAt: plan.updated_at,
+          nutritionalSummary: planData.nutritionalSummary,
+          estimatedWeeklyCost: planData.estimatedWeeklyCost,
+          batchCookingDays: planData.batchCookingDays,
+          aiExplanation: planData.aiExplanation
+        };
+      });
 
       set({ allMealPlans: transformedPlans });
 
@@ -170,7 +179,7 @@ export const createPlanDataActions = (
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
-      
+
       // Set empty array on error to prevent undefined
       set({ allMealPlans: [] });
     }

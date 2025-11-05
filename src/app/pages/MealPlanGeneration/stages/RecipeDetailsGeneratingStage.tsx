@@ -34,7 +34,9 @@ const RecipeDetailsGeneratingStage: React.FC<RecipeDetailsGeneratingStageProps> 
   }
 
   const progressPercentage = totalMeals > 0 ? Math.round((generatedMeals / totalMeals) * 100) : 0;
-  const isStreaming = loadingState === 'streaming_recipes' && generatedMeals > 0;
+  // FIXED: Show cards when we're enriching recipes OR have generated meals
+  // Previously used 'streaming_recipes' which never exists in the code
+  const isStreaming = (loadingState === 'enriching' || loadingState === 'streaming') && generatedMeals > 0;
 
   // Collect all recipe IDs for realtime listening
   const recipeIds = useMemo(() => {
@@ -242,7 +244,8 @@ const RecipeDetailsGeneratingStage: React.FC<RecipeDetailsGeneratingStageProps> 
       </MotionDiv>
 
       {/* Recipes Streaming Display - Rich Card Grid */}
-      {isStreaming && currentPlan && (
+      {/* Show cards when enriching OR when we have generated meals and days */}
+      {isStreaming && currentPlan && currentPlan.days.length > 0 && (
         <MotionDiv
           {...(!isPerformanceMode && {
             initial: { opacity: 0, y: 20 },

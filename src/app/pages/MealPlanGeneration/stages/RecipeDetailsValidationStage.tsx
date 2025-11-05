@@ -138,50 +138,79 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onDiscard}
-                  disabled={isSaving}
-                  className={`px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200 ${
-                    isSaving ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  Régénérer
-                </button>
-
+              {/* CTA Card - Premium Save Button */}
+              <MotionDiv
+                className="relative"
+                {...(!isPerformanceMode && {
+                  whileHover: { scale: 1.02 },
+                  transition: { duration: 0.2 }
+                })}
+              >
                 <button
                   onClick={onSaveCompletePlan}
                   disabled={isSaving}
-                  className={`px-6 py-2 text-white font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
-                    isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                  className={`relative overflow-hidden px-10 py-4 rounded-2xl transition-all duration-300 group w-full ${
+                    isSaving ? 'opacity-70 cursor-not-allowed' : ''
                   }`}
-                  style={
-                    !isSaving
-                      ? {
-                          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(34, 197, 94, 0.85) 100%)',
-                          border: '2px solid color-mix(in srgb, #10B981 60%, transparent)',
-                          boxShadow: `
-                            0 8px 24px color-mix(in srgb, #10B981 40%, transparent),
-                            inset 0 2px 0 rgba(255, 255, 255, 0.3)
-                          `
-                        }
-                      : {
-                          background: 'rgba(16, 185, 129, 0.2)',
-                          border: '2px solid rgba(16, 185, 129, 0.3)'
-                        }
-                  }
+                  style={{
+                    background: isSaving
+                      ? 'rgba(16, 185, 129, 0.3)'
+                      : `
+                        linear-gradient(135deg,
+                          color-mix(in srgb, #10B981 90%, transparent),
+                          color-mix(in srgb, #22C55E 80%, transparent),
+                          color-mix(in srgb, #34D399 70%, transparent)
+                        )
+                      `,
+                    border: `3px solid ${isSaving ? 'rgba(16, 185, 129, 0.4)' : 'color-mix(in srgb, #10B981 70%, transparent)'}`,
+                    boxShadow: isSaving
+                      ? '0 8px 24px rgba(16, 185, 129, 0.2)'
+                      : `
+                        0 20px 50px color-mix(in srgb, #10B981 50%, transparent),
+                        0 0 40px color-mix(in srgb, #10B981 30%, transparent),
+                        inset 0 3px 0 rgba(255,255,255,0.4)
+                      `
+                  }}
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Sauvegarde...</span>
-                    </>
-                  ) : (
-                    <>
-                      <SpatialIcon Icon={ICONS.Save} size={18} />
-                      <span>Sauvegarder dans ma Bibliothèque</span>
-                    </>
+                  {/* Shimmer Effect */}
+                  {!isPerformanceMode && !isSaving && (
+                    <motion.div
+                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)'
+                      }}
+                      animate={{ x: ['-200%', '200%'] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    />
                   )}
+
+                  <div className="flex items-center justify-center gap-3 relative z-10">
+                    {isSaving ? (
+                      <>
+                        <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-white text-xl font-bold">Sauvegarde en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <SpatialIcon Icon={ICONS.Save} size={28} color="white" variant="pure" />
+                        <span className="text-white text-xl font-bold">Sauvegarder dans ma Bibliothèque</span>
+                        <SpatialIcon Icon={ICONS.Sparkles} size={24} color="white" variant="pure" />
+                      </>
+                    )}
+                  </div>
+                </button>
+              </MotionDiv>
+
+              {/* Secondary Actions */}
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <button
+                  onClick={onDiscard}
+                  disabled={isSaving}
+                  className={`px-5 py-2.5 bg-white/10 hover:bg-white/15 border border-white/25 rounded-xl text-white/90 font-medium transition-all duration-200 ${
+                    isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:border-white/40'
+                  }`}
+                >
+                  Régénérer un nouveau plan
                 </button>
               </div>
             </div>

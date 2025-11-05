@@ -697,9 +697,11 @@ export const createGenerationActions = (
         );
       }
 
+      // FIXED: Transition to recipe_details_validation since recipes are enriched
+      // Previously went to 'validation' which shows basic plan without recipe details
       set({
         loadingState: 'idle',
-        currentStep: 'validation',
+        currentStep: 'recipe_details_validation',
         simulatedOverallProgress: 100,
         loadingMessage: 'Plan complet généré avec succès !',
         lastStateUpdate: Date.now()
