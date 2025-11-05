@@ -108,7 +108,7 @@ const ShoppingListTab: React.FC = () => {
       {/* Main Content */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={isGenerating ? 'generating' : shoppingList ? 'display' : 'generator'}
+          key={allShoppingLists.length > 0 ? 'library' : 'empty'}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
