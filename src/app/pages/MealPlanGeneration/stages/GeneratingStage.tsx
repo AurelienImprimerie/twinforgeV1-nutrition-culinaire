@@ -23,6 +23,27 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
   const progressPercentage = Math.round((receivedDays / totalDays) * 100);
   const isStreaming = loadingState === 'streaming' && receivedDays > 0;
 
+  // Generate contextual messages based on progress
+  const getContextualMessage = (): string => {
+    if (!isStreaming) {
+      return 'La Forge Nutritionnelle analyse votre inventaire et vos préférences pour créer des plans alimentaires optimisés...';
+    }
+
+    if (receivedDays === 0) {
+      return 'Analyse de votre inventaire et création du premier jour...';
+    } else if (receivedDays === 1) {
+      return 'Premier jour généré ! Préparation de la suite de votre semaine...';
+    } else if (receivedDays < 4) {
+      return `${receivedDays} jours créés ! L'IA optimise vos repas en fonction de vos objectifs...`;
+    } else if (receivedDays < 6) {
+      return `${receivedDays} jours générés ! Finalisation de votre semaine équilibrée...`;
+    } else if (receivedDays === 6) {
+      return 'Presque terminé ! Derniers ajustements pour une semaine parfaitement équilibrée...';
+    } else {
+      return 'Plan hebdomadaire complet ! Vérification finale...';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Loader Card */}
@@ -133,20 +154,24 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
                 Forge des Plans Alimentaires
               </h2>
               <p className="text-white/80 text-lg max-w-2xl mx-auto leading-relaxed">
-                La Forge Nutritionnelle analyse votre inventaire et vos préférences pour créer des plans alimentaires optimisés...
+                {getContextualMessage()}
               </p>
             </div>
 
-            {/* Progress Bar */}
-            {isStreaming && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/80">Génération en cours...</span>
+            {/* Progress Bar - Always visible during generation */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-white/80">
+                  {isStreaming ? 'Génération en cours...' : 'Préparation...'}
+                </span>
+                {isStreaming && (
                   <span className="text-violet-400 font-semibold">{receivedDays}/{totalDays} jours</span>
-                </div>
-                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden">
+                )}
+              </div>
+              <div className="relative w-full h-4 bg-white/5 rounded-full overflow-hidden">
+                {isStreaming ? (
                   <motion.div
-                    className="h-full bg-gradient-to-r from-violet-500 to-purple-500"
+                    className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-violet-600"
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercentage}%` }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -154,12 +179,38 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
                       boxShadow: '0 0 20px rgba(139, 92, 246, 0.6)'
                     }}
                   />
-                </div>
-                <div className="text-center">
-                  <span className="text-violet-300 text-2xl font-bold">{progressPercentage}%</span>
-                </div>
+                ) : (
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-violet-500 to-purple-500"
+                    animate={{
+                      x: ['-100%', '100%']
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: 'linear'
+                    }}
+                    style={{
+                      width: '50%',
+                      boxShadow: '0 0 20px rgba(139, 92, 246, 0.6)'
+                    }}
+                  />
+                )}
               </div>
-            )}
+              <div className="flex items-center justify-between">
+                <div className="text-center flex-1">
+                  <span className="text-violet-300 text-2xl font-bold">
+                    {isStreaming ? `${progressPercentage}%` : '0%'}
+                  </span>
+                </div>
+                {config.batchCooking && (
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-400/30">
+                    <SpatialIcon Icon={ICONS.Sparkles} size={14} className="text-violet-400" />
+                    <span className="text-violet-300 text-xs font-medium">Batch Cooking</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Loading Steps - Only show when not streaming */}
             {!isStreaming && (
@@ -210,13 +261,54 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
         </GlassCard>
       </MotionDiv>
 
+      {/* Real-time Stats Card */}
+      {isStreaming && currentPlan && (
+        <MotionDiv
+          {...(!isPerformanceMode && {
+            initial: { opacity: 0, scale: 0.95 },
+            animate: { opacity: 1, scale: 1 },
+            transition: { duration: 0.4 }
+          })}
+        >
+          <GlassCard
+            className="p-6"
+            style={{
+              background: 'rgba(11, 14, 23, 0.75)',
+              borderColor: 'rgba(139, 92, 246, 0.3)',
+              boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)'
+            }}
+          >
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-violet-400 text-3xl font-bold mb-1">
+                  {receivedDays * 3}
+                </div>
+                <div className="text-white/60 text-xs">Repas Créés</div>
+              </div>
+              <div className="text-center">
+                <div className="text-violet-400 text-3xl font-bold mb-1">
+                  {receivedDays}
+                </div>
+                <div className="text-white/60 text-xs">Jours Générés</div>
+              </div>
+              <div className="text-center">
+                <div className="text-violet-400 text-3xl font-bold mb-1">
+                  {config.weekCount}
+                </div>
+                <div className="text-white/60 text-xs">Semaine{config.weekCount > 1 ? 's' : ''}</div>
+              </div>
+            </div>
+          </GlassCard>
+        </MotionDiv>
+      )}
+
       {/* Days Streaming Display */}
       {isStreaming && currentPlan && (
         <MotionDiv
           {...(!isPerformanceMode && {
             initial: { opacity: 0, y: 20 },
             animate: { opacity: 1, y: 0 },
-            transition: { duration: 0.5 }
+            transition: { duration: 0.5, delay: 0.2 }
           })}
         >
           <GlassCard
@@ -242,12 +334,23 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
                     className="text-white"
                   />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="text-white font-bold text-xl">{currentPlan.title}</h3>
                   <p className="text-white/60 text-sm">
                     {receivedDays} jour{receivedDays > 1 ? 's' : ''} généré{receivedDays > 1 ? 's' : ''}
                   </p>
                 </div>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="w-6 h-6"
+                >
+                  <SpatialIcon
+                    Icon={ICONS.Sparkles}
+                    size={24}
+                    className="text-violet-400"
+                  />
+                </motion.div>
               </div>
 
               {/* Days Grid */}

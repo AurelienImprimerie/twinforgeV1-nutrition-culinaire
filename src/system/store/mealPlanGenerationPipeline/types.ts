@@ -4,7 +4,6 @@ export type MealPlanGenerationStep =
   | 'configuration'
   | 'generating'
   | 'validation'
-  | 'recipe_details_generating'
   | 'recipe_details_validation';
 
 export interface MealPlanGenerationStepData {

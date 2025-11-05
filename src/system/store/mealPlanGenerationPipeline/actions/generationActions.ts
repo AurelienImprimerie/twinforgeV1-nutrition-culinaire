@@ -6,6 +6,80 @@ import logger from '../../../../lib/utils/logger';
 import { nanoid } from 'nanoid';
 import { mealPlanProgressService } from '../../../services/mealPlanProgressService';
 
+// Helper function to trigger background image generation
+interface ImageGenerationParams {
+  recipeId: string;
+  recipeDetails: any;
+  imageSignature: string;
+  userId: string;
+  accessToken: string;
+  planId: string;
+  dayIndex: number;
+  mealId: string;
+}
+
+async function triggerImageGeneration(params: ImageGenerationParams): Promise<void> {
+  const { recipeId, recipeDetails, imageSignature, userId, accessToken, planId, dayIndex, mealId } = params;
+
+  logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Triggering background image generation', {
+    recipeId,
+    recipeTitle: recipeDetails.title,
+    planId,
+    dayIndex,
+    mealId,
+    timestamp: new Date().toISOString()
+  });
+
+  try {
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-generator`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipe_id: recipeId,
+        recipe_details: {
+          title: recipeDetails.title,
+          ingredients: recipeDetails.ingredients || [],
+          description: recipeDetails.description
+        },
+        image_signature: imageSignature,
+        user_id: userId
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Background image generation successful', {
+        recipeId,
+        imageUrl: result.image_url,
+        generationMethod: result.generation_method,
+        cached: result.cache_hit,
+        costUsd: result.cost_usd,
+        timestamp: new Date().toISOString()
+      });
+
+      // Note: We don't update the state here since the image is stored in the database
+      // and will be fetched when the meal plan is loaded
+    } else {
+      logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Background image generation failed', {
+        recipeId,
+        status: response.status,
+        statusText: response.statusText
+      });
+    }
+  } catch (error) {
+    logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Background image generation error', {
+      recipeId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
 export interface GenerationActions {
   generateMealPlans: () => Promise<void>;
   generateDetailedRecipes: () => Promise<void>;
@@ -42,6 +116,26 @@ export const createGenerationActions = (
       timestamp: new Date().toISOString()
     });
 
+    // CRITICAL: Créer la session dans la base de données AVANT la génération
+    // Cela résout le problème de foreign key lors de la sauvegarde
+    if (currentSessionId) {
+      const sessionSaved = await mealPlanProgressService.saveSession(
+        userId,
+        currentSessionId,
+        config
+      );
+
+      if (!sessionSaved) {
+        logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Failed to save session to database', {
+          sessionId: currentSessionId
+        });
+      } else {
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Session saved to database successfully', {
+          sessionId: currentSessionId
+        });
+      }
+    }
+
     logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Transitioning to generating step', {
       sessionId: currentSessionId,
       timestamp: new Date().toISOString()
@@ -51,7 +145,7 @@ export const createGenerationActions = (
       currentStep: 'generating',
       loadingState: 'generating',
       loadingMessage: 'Analyse de votre inventaire et préférences...',
-      simulatedOverallProgress: 20
+      simulatedOverallProgress: 25
     });
 
     try {
@@ -86,7 +180,7 @@ export const createGenerationActions = (
         mealPlanCandidates: initialPlans,
         loadingState: 'streaming',
         loadingMessage: 'Génération des plans avec l\'IA...',
-        simulatedOverallProgress: 30
+        simulatedOverallProgress: 35
       });
 
       // Generate plans via edge function with streaming
@@ -205,7 +299,7 @@ export const createGenerationActions = (
                         status: receivedDays.length === 7 ? 'ready' as const : 'loading' as const
                       } : p
                     ),
-                    simulatedOverallProgress: 30 + (receivedDays.length / 7) * 30
+                    simulatedOverallProgress: 35 + (receivedDays.length / 7) * 15
                   }));
 
                   logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Day received via streaming', {
@@ -265,10 +359,18 @@ export const createGenerationActions = (
         timestamp: new Date().toISOString()
       });
 
+      // Sauvegarder automatiquement la progression dans la base de données
+      if (currentSessionId) {
+        await mealPlanProgressService.saveValidationProgress(
+          currentSessionId,
+          get().mealPlanCandidates
+        );
+      }
+
       set({
         loadingState: 'idle',
         currentStep: 'validation',
-        simulatedOverallProgress: 60
+        simulatedOverallProgress: 50
       });
 
       logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'All meal plans generated successfully', {
@@ -311,10 +413,10 @@ export const createGenerationActions = (
     });
 
     set({
-      currentStep: 'recipe_details_generating',
+      currentStep: 'validation',
       loadingState: 'generating_recipes',
       loadingMessage: 'Génération des recettes détaillées...',
-      simulatedOverallProgress: 60
+      simulatedOverallProgress: 50
     });
 
     try {
@@ -351,8 +453,8 @@ export const createGenerationActions = (
 
       set({
         loadingState: 'streaming_recipes',
-        currentStep: 'recipe_details_validation',
-        simulatedOverallProgress: 70
+        currentStep: 'validation',
+        simulatedOverallProgress: 60
       });
 
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipe-detail-generator`;
@@ -425,6 +527,7 @@ export const createGenerationActions = (
                                             tips: detailedRecipe.tips,
                                             variations: detailedRecipe.variations,
                                             imageSignature: detailedRecipe.imageSignature,
+                                            imageUrl: undefined, // Will be populated by background process
                                             status: 'ready' as const
                                           }
                                         }
@@ -439,7 +542,7 @@ export const createGenerationActions = (
                 }));
 
                 processedMeals++;
-                const progress = 70 + (processedMeals / totalMeals) * 30;
+                const progress = 60 + (processedMeals / totalMeals) * 15;
 
                 set({
                   simulatedOverallProgress: Math.round(progress),
@@ -455,6 +558,25 @@ export const createGenerationActions = (
                   sessionId: currentSessionId,
                   timestamp: new Date().toISOString()
                 });
+
+                // Trigger image generation in background (non-blocking)
+                if (detailedRecipe.imageSignature) {
+                  triggerImageGeneration({
+                    recipeId: detailedRecipe.id,
+                    recipeDetails: detailedRecipe,
+                    imageSignature: detailedRecipe.imageSignature,
+                    userId,
+                    accessToken: session?.access_token || '',
+                    planId: plan.id,
+                    dayIndex: day.dayIndex,
+                    mealId: meal.id
+                  }).catch(imgError => {
+                    logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Background image generation failed', {
+                      mealName: meal.name,
+                      error: imgError instanceof Error ? imgError.message : 'Unknown'
+                    });
+                  });
+                }
               } else {
                 logger.error('MEAL_PLAN_GENERATION_PIPELINE', 'Recipe generation failed for meal', {
                   mealName: meal.name,
@@ -477,9 +599,11 @@ export const createGenerationActions = (
         }
       }
 
+      // Transition vers l'étape de validation finale
       set({
         loadingState: 'idle',
-        simulatedOverallProgress: 100
+        currentStep: 'recipe_details_validation',
+        simulatedOverallProgress: 75
       });
 
       logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'All detailed recipes generated', {
@@ -498,7 +622,7 @@ export const createGenerationActions = (
 
       set({
         loadingState: 'idle',
-        currentStep: 'validation'
+        currentStep: 'generating'
       });
 
       throw error;

@@ -10,7 +10,6 @@ import MealPlanGenerationProgressHeader from './components/MealPlanGenerationPro
 import ConfigurationStage from './stages/ConfigurationStage';
 import GeneratingStage from './stages/GeneratingStage';
 import ValidationStage from './stages/ValidationStage';
-import RecipeDetailsGeneratingStage from './stages/RecipeDetailsGeneratingStage';
 import RecipeDetailsValidationStage from './stages/RecipeDetailsValidationStage';
 import ResumeProgressModal from './components/ResumeProgressModal';
 import { mealPlanProgressService } from '../../../system/services/mealPlanProgressService';
@@ -305,11 +304,8 @@ const MealPlanGenerationPage: React.FC = () => {
           onDiscard={handleDiscard}
           isSaving={isSaving}
           onExit={handleExit}
+          isGeneratingRecipes={loadingState === 'generating_recipes' || loadingState === 'streaming_recipes'}
         />
-      )}
-
-      {currentStep === 'recipe_details_generating' && (
-        <RecipeDetailsGeneratingStage onExit={handleExit} />
       )}
 
       {currentStep === 'recipe_details_validation' && (
