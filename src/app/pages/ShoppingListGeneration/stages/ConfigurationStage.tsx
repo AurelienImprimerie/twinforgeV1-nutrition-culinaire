@@ -31,7 +31,7 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
   const MotionDiv = isPerformanceMode ? 'div' : motion.div;
 
   const selectedPlan = availableMealPlans.find(plan => plan.id === selectedMealPlanId);
-  const hasValidPlan = selectedPlan && selectedPlan.plan_data;
+  const hasValidPlan = selectedPlan && selectedPlan.days && selectedPlan.days.length > 0;
 
   const mealPlanOptions = availableMealPlans.map(plan => {
     // Parse the date properly from different possible formats
@@ -217,7 +217,7 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                     <div>
                       <p className="text-white font-medium">Plan sélectionné</p>
                       <p className="text-white/70 text-sm">
-                        {selectedPlan.plan_data?.days?.length || 0} jours de repas planifiés
+                        {selectedPlan.days?.length || 0} jours de repas planifiés
                       </p>
                     </div>
                   </div>
@@ -309,7 +309,7 @@ const ConfigurationStage: React.FC<ConfigurationStageProps> = ({
                     Liste basée sur vos repas planifiés pour la semaine
                   </p>
                   <p className="text-orange-400 text-xs mt-1 font-medium">
-                    {selectedPlan.plan_data?.days?.length || 0} jours de repas
+                    {selectedPlan.days?.length || 0} jours de repas
                   </p>
                 </div>
               </div>
