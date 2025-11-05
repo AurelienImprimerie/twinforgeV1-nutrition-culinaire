@@ -28,7 +28,7 @@ const LowTokensModal: React.FC<LowTokensModalProps> = ({
   const handleGoToSubscription = () => {
     click();
     onClose();
-    navigate('/settings#subscription');
+    navigate('/settings?tab=account');
   };
 
   if (!isOpen) return null;
