@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePerformanceMode } from '../../../../system/context/PerformanceModeContext';
 import { useMealPlanGenerationPipeline } from '../../../../system/store/mealPlanGenerationPipeline';
@@ -8,6 +8,9 @@ import SpatialIcon from '../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../ui/icons/registry';
 import SkeletonBase from '../../../../ui/components/skeletons/SkeletonBase';
 import MealPlanRecipeCard from '../components/MealPlanRecipeCard';
+import RecipeDetailModal from '../../Fridge/tabs/RecipesTab/components/RecipeDetailModal';
+import type { Recipe } from '../../../../domain/recipe';
+import type { DetailedRecipe } from '../../../../system/store/mealPlanGenerationPipeline/types';
 
 interface GeneratingStageProps {
   onExit: () => void;
@@ -26,6 +29,39 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
     lastStateUpdate
   } = useMealPlanGenerationPipeline();
   const MotionDiv = isPerformanceMode ? 'div' : motion.div;
+
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  // Convert DetailedRecipe to Recipe for the modal
+  const convertToRecipe = (detailedRecipe: DetailedRecipe, mealId: string, sessionId: string): Recipe => {
+    return {
+      id: detailedRecipe.id,
+      sessionId: sessionId,
+      title: detailedRecipe.title,
+      ingredients: detailedRecipe.ingredients.map(ing => ({
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit,
+        optional: false
+      })),
+      instructions: detailedRecipe.instructions,
+      prepTimeMin: detailedRecipe.prepTimeMin || 0,
+      cookTimeMin: detailedRecipe.cookTimeMin || 0,
+      servings: detailedRecipe.servings,
+      dietaryTags: detailedRecipe.dietaryTags,
+      nutritionalInfo: {
+        calories: detailedRecipe.nutritionalInfo.kcal,
+        protein: detailedRecipe.nutritionalInfo.protein,
+        carbs: detailedRecipe.nutritionalInfo.carbs,
+        fat: detailedRecipe.nutritionalInfo.fat,
+        fiber: detailedRecipe.nutritionalInfo.fiber
+      },
+      imageUrl: detailedRecipe.imageUrl,
+      imageSignature: detailedRecipe.imageSignature,
+      status: detailedRecipe.status,
+      createdAt: new Date().toISOString()
+    };
+  };
 
   // Calculate progress based on received days from store
   const currentPlan = mealPlanCandidates[0];
@@ -418,6 +454,10 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
                             meal={meal}
                             dayIndex={dayIndex}
                             isGenerated={isGenerated}
+                            onClick={isGenerated && meal.detailedRecipe ? () => {
+                              const recipe = convertToRecipe(meal.detailedRecipe!, meal.id, currentPlan.id);
+                              setSelectedRecipe(recipe);
+                            } : undefined}
                           />
                         );
                       })}
@@ -489,6 +529,14 @@ const GeneratingStage: React.FC<GeneratingStageProps> = ({ onExit }) => {
           Quitter
         </button>
       </MotionDiv>
+
+      {/* Recipe Detail Modal */}
+      {selectedRecipe && (
+        <RecipeDetailModal
+          recipe={selectedRecipe}
+          onClose={() => setSelectedRecipe(null)}
+        />
+      )}
     </div>
   );
 };

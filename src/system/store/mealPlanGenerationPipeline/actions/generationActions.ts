@@ -510,6 +510,7 @@ export const createGenerationActions = (
                                                 ? {
                                                     ...m,
                                                     recipeGenerated: true,
+                                                    status: 'ready' as const,
                                                     detailedRecipe: {
                                                       id: detailedRecipe.id,
                                                       title: detailedRecipe.title || meal.name,
