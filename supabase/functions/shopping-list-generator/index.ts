@@ -546,25 +546,21 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
     console.log('[PARSE_SANITIZE_START] Original JSON length:', jsonString.length);
 
     // Step 1: Replace problematic Unicode characters that break JSON.parse
-    // Replace em-dash, en-dash with regular dash
-    jsonString = jsonString.replace(/[\u2013\u2014]/g, '-');
-    // Replace special apostrophes with regular apostrophe
-    jsonString = jsonString.replace(/[\u2018\u2019]/g, "'");
-    // Replace special quotes with regular quotes
-    jsonString = jsonString.replace(/[\u201C\u201D]/g, '"');
-    // Replace œ ligature with oe
-    jsonString = jsonString.replace(/œ/g, 'oe');
-    // Replace any other problematic Unicode chars
-    jsonString = jsonString.replace(/[\u0080-\u00FF]/g, (char) => {
-      const code = char.charCodeAt(0);
-      if (code >= 0xC0 && code <= 0xFF) {
-        // Keep accented characters like é, è, à, etc.
-        return char;
-      }
-      return '?';
-    });
+    try {
+      // Replace em-dash, en-dash with regular dash
+      jsonString = jsonString.replace(/\u2013/g, '-').replace(/\u2014/g, '-');
+      // Replace special apostrophes with regular apostrophe
+      jsonString = jsonString.replace(/\u2018/g, "'").replace(/\u2019/g, "'");
+      // Replace special quotes with regular quotes
+      jsonString = jsonString.replace(/\u201C/g, '"').replace(/\u201D/g, '"');
+      // Replace œ ligature with oe
+      jsonString = jsonString.replace(/\u0153/g, 'oe');
 
-    console.log('[PARSE_SANITIZE_UNICODE] After Unicode cleanup');
+      console.log('[PARSE_SANITIZE_UNICODE] After Unicode cleanup');
+    } catch (err) {
+      console.error('[PARSE_SANITIZE_ERROR] Error during Unicode cleanup:', err);
+      // Continue anyway, maybe the JSON is fine
+    }
 
     // Step 2: Fix malformed strings with unescaped quotes inside JSON values
     // This regex finds strings that have unescaped single quotes that break JSON
