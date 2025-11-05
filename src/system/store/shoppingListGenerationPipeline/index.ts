@@ -214,17 +214,17 @@ export const useShoppingListGenerationPipeline = create<ShoppingListGenerationPi
 
       // Fetch user profile for region-based pricing
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('country_code')
-        .eq('id', user.id)
+        .from('user_profile')
+        .select('country')
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      const { coefficient, region } = getRegionCoefficient(profile?.country_code);
+      const { coefficient, region } = getRegionCoefficient(profile?.country);
 
       logger.info('SHOPPING_LIST_PIPELINE', 'Region pricing info', {
         region,
         coefficient,
-        countryCode: profile?.country_code
+        country: profile?.country
       });
 
       // Call the shopping-list-generator Edge Function
