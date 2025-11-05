@@ -37,6 +37,10 @@ export interface MealPlanDay {
 
 export interface DetailedRecipe {
   id: string;
+  title: string;
+  prepTimeMin?: number;
+  cookTimeMin?: number;
+  imageUrl?: string;
   ingredients: Array<{
     name: string;
     quantity: string;

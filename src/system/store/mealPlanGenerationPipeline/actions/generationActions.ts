@@ -512,6 +512,10 @@ export const createGenerationActions = (
                                                     recipeGenerated: true,
                                                     detailedRecipe: {
                                                       id: detailedRecipe.id,
+                                                      title: detailedRecipe.title || meal.name,
+                                                      prepTimeMin: detailedRecipe.prepTimeMin,
+                                                      cookTimeMin: detailedRecipe.cookTimeMin,
+                                                      imageUrl: undefined,
                                                       ingredients: detailedRecipe.ingredients,
                                                       instructions: detailedRecipe.instructions,
                                                       tips: detailedRecipe.tips,
