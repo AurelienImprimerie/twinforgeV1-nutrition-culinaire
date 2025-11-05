@@ -409,58 +409,139 @@ export const createGenerationActions = (
                   });
 
                   // CRITICAL: Update plan with received day AND force UI update with timestamp
-                  // Use set() with a callback to ensure we get the latest state
+                  // PRESERVE existing enriched days and only add/update the new day
                   set((currentState) => {
                     const totalDays = currentState.totalDaysToGenerate;
                     const newReceivedCount = (i * 7) + receivedDays.length;
                     const progressPercent = 5 + (newReceivedCount / totalDays) * 70; // 5% to 75%
 
+                    const currentPlan = currentState.mealPlanCandidates[i];
+                    const existingDays = currentPlan?.days || [];
+                    const newDayIndex = receivedDays.length - 1;
+                    const newDayData = data.data;
+
+                    // Create new day structure
+                    const breakfastId = nanoid();
+                    const lunchId = nanoid();
+                    const dinnerId = nanoid();
+
+                    logger.info('MEAL_PLAN_GENERATION_PIPELINE', '🆕 Creating new day meals', {
+                      weekNumber: i + 1,
+                      dayIndex: newDayIndex,
+                      date: newDayData.date,
+                      breakfastId,
+                      lunchId,
+                      dinnerId,
+                      breakfast: newDayData.breakfast?.title,
+                      lunch: newDayData.lunch?.title,
+                      dinner: newDayData.dinner?.title,
+                      timestamp: new Date().toISOString()
+                    });
+
+                    const newDay = {
+                      date: newDayData.date,
+                      dayIndex: newDayIndex,
+                      meals: [
+                        {
+                          id: breakfastId,
+                          type: 'breakfast',
+                          name: newDayData.breakfast?.title || 'Petit-déjeuner',
+                          description: newDayData.breakfast?.description,
+                          ingredients: newDayData.breakfast?.ingredients,
+                          prepTime: newDayData.breakfast?.prep_time_min,
+                          cookTime: newDayData.breakfast?.cook_time_min,
+                          calories: newDayData.breakfast?.calories_est,
+                          status: 'ready' as const,
+                          recipeGenerated: false
+                        },
+                        {
+                          id: lunchId,
+                          type: 'lunch',
+                          name: newDayData.lunch?.title || 'Déjeuner',
+                          description: newDayData.lunch?.description,
+                          ingredients: newDayData.lunch?.ingredients,
+                          prepTime: newDayData.lunch?.prep_time_min,
+                          cookTime: newDayData.lunch?.cook_time_min,
+                          calories: newDayData.lunch?.calories_est,
+                          status: 'ready' as const,
+                          recipeGenerated: false
+                        },
+                        {
+                          id: dinnerId,
+                          type: 'dinner',
+                          name: newDayData.dinner?.title || 'Dîner',
+                          description: newDayData.dinner?.description,
+                          ingredients: newDayData.dinner?.ingredients,
+                          prepTime: newDayData.dinner?.prep_time_min,
+                          cookTime: newDayData.dinner?.cook_time_min,
+                          calories: newDayData.dinner?.calories_est,
+                          status: 'ready' as const,
+                          recipeGenerated: false
+                        }
+                      ]
+                    };
+
+                    // Merge: keep existing enriched days, add new day
+                    const updatedDays = [...existingDays];
+                    if (updatedDays[newDayIndex]) {
+                      logger.info('MEAL_PLAN_GENERATION_PIPELINE', '🔄 Merging day with existing data', {
+                        dayIndex: newDayIndex,
+                        existingMealsCount: updatedDays[newDayIndex]?.meals?.length || 0,
+                        existingEnrichedMeals: updatedDays[newDayIndex]?.meals?.filter(m => m.recipeGenerated).map(m => ({
+                          id: m.id,
+                          name: m.name,
+                          type: m.type,
+                          hasDetailedRecipe: !!m.detailedRecipe,
+                          hasImage: !!m.detailedRecipe?.imageUrl
+                        })) || [],
+                        timestamp: new Date().toISOString()
+                      });
+
+                      // Day exists but might have been enriched - preserve enriched meals
+                      updatedDays[newDayIndex] = {
+                        ...newDay,
+                        meals: newDay.meals.map((newMeal, mealIdx) => {
+                          const existingMeal = updatedDays[newDayIndex]?.meals[mealIdx];
+                          // If existing meal has enrichment, preserve it
+                          if (existingMeal?.recipeGenerated && existingMeal?.detailedRecipe) {
+                            logger.info('MEAL_PLAN_GENERATION_PIPELINE', '✅ PRESERVING enriched meal', {
+                              mealId: existingMeal.id,
+                              mealName: existingMeal.name,
+                              type: existingMeal.type,
+                              hasDetailedRecipe: true,
+                              hasImage: !!existingMeal.detailedRecipe.imageUrl,
+                              imageUrl: existingMeal.detailedRecipe.imageUrl,
+                              recipeId: existingMeal.detailedRecipe.id,
+                              timestamp: new Date().toISOString()
+                            });
+                            return existingMeal;
+                          }
+                          logger.info('MEAL_PLAN_GENERATION_PIPELINE', '🔄 Replacing unenriched meal with new data', {
+                            oldMealId: existingMeal?.id,
+                            newMealId: newMeal.id,
+                            mealName: newMeal.name,
+                            type: newMeal.type,
+                            wasEnriched: existingMeal?.recipeGenerated || false,
+                            timestamp: new Date().toISOString()
+                          });
+                          return newMeal;
+                        })
+                      };
+                    } else {
+                      logger.info('MEAL_PLAN_GENERATION_PIPELINE', '➕ Adding new day to plan', {
+                        dayIndex: newDayIndex,
+                        date: newDay.date,
+                        mealsCount: newDay.meals.length,
+                        timestamp: new Date().toISOString()
+                      });
+                      updatedDays.push(newDay);
+                    }
+
                     return {
                       mealPlanCandidates: currentState.mealPlanCandidates.map((p, idx) =>
                         idx === i ? {
                           ...p,
-                          days: receivedDays.map((day, dayIdx) => ({
-                            date: day.date,
-                            dayIndex: dayIdx,
-                            meals: [
-                              {
-                                id: nanoid(),
-                                type: 'breakfast',
-                                name: day.breakfast?.title || 'Petit-déjeuner',
-                                description: day.breakfast?.description,
-                                ingredients: day.breakfast?.ingredients,
-                                prepTime: day.breakfast?.prep_time_min,
-                                cookTime: day.breakfast?.cook_time_min,
-                                calories: day.breakfast?.calories_est,
-                                status: 'ready' as const,
-                                recipeGenerated: false
-                              },
-                              {
-                                id: nanoid(),
-                                type: 'lunch',
-                                name: day.lunch?.title || 'Déjeuner',
-                                description: day.lunch?.description,
-                                ingredients: day.lunch?.ingredients,
-                                prepTime: day.lunch?.prep_time_min,
-                                cookTime: day.lunch?.cook_time_min,
-                                calories: day.lunch?.calories_est,
-                                status: 'ready' as const,
-                                recipeGenerated: false
-                              },
-                              {
-                                id: nanoid(),
-                                type: 'dinner',
-                                name: day.dinner?.title || 'Dîner',
-                                description: day.dinner?.description,
-                                ingredients: day.dinner?.ingredients,
-                                prepTime: day.dinner?.prep_time_min,
-                                cookTime: day.dinner?.cook_time_min,
-                                calories: day.dinner?.calories_est,
-                                status: 'ready' as const,
-                                recipeGenerated: false
-                              }
-                            ]
-                          })),
+                          days: updatedDays,
                           status: receivedDays.length === 7 ? 'ready' as const : 'loading' as const
                         } : p
                       ),
@@ -524,51 +605,79 @@ export const createGenerationActions = (
                         });
 
                         if (detailedRecipe) {
+                          logger.info('MEAL_PLAN_GENERATION_PIPELINE', '🍽️ ENRICHMENT SUCCESS - Updating meal with detailed recipe', {
+                            mealId: meal.id,
+                            mealName: meal.name,
+                            mealType: meal.type,
+                            recipeId: detailedRecipe.id,
+                            recipeTitle: detailedRecipe.title,
+                            hasIngredients: !!detailedRecipe.ingredients,
+                            hasInstructions: !!detailedRecipe.instructions,
+                            imageSignature: detailedRecipe.imageSignature,
+                            dayIndex: currentDayIndex,
+                            weekNumber: i + 1,
+                            timestamp: new Date().toISOString()
+                          });
+
                           // Update state with detailed recipe
-                          set((state) => ({
-                            mealPlanCandidates: state.mealPlanCandidates.map((p) =>
-                              p.id === plan.id
-                                ? {
-                                    ...p,
-                                    days: p.days.map((d, dIdx) =>
-                                      dIdx === currentDayIndex
-                                        ? {
-                                            ...d,
-                                            meals: d.meals.map((m) =>
-                                              m.id === meal.id
-                                                ? {
-                                                    ...m,
-                                                    recipeGenerated: true,
-                                                    status: 'ready' as const,
-                                                    detailedRecipe: {
-                                                      id: detailedRecipe.id,
-                                                      title: detailedRecipe.title || meal.name,
-                                                      prepTimeMin: detailedRecipe.prepTimeMin,
-                                                      cookTimeMin: detailedRecipe.cookTimeMin,
-                                                      imageUrl: undefined,
-                                                      ingredients: detailedRecipe.ingredients,
-                                                      instructions: detailedRecipe.instructions,
-                                                      tips: detailedRecipe.tips,
-                                                      variations: detailedRecipe.variations,
-                                                      difficulty: detailedRecipe.difficulty,
-                                                      servings: detailedRecipe.servings,
-                                                      nutritionalInfo: detailedRecipe.nutritionalInfo,
-                                                      dietaryTags: detailedRecipe.dietaryTags,
-                                                      imageSignature: detailedRecipe.imageSignature,
-                                                      status: 'ready' as const
+                          set((state) => {
+                            const updatedState = {
+                              mealPlanCandidates: state.mealPlanCandidates.map((p) =>
+                                p.id === plan.id
+                                  ? {
+                                      ...p,
+                                      days: p.days.map((d, dIdx) =>
+                                        dIdx === currentDayIndex
+                                          ? {
+                                              ...d,
+                                              meals: d.meals.map((m) =>
+                                                m.id === meal.id
+                                                  ? {
+                                                      ...m,
+                                                      recipeGenerated: true,
+                                                      status: 'ready' as const,
+                                                      detailedRecipe: {
+                                                        id: detailedRecipe.id,
+                                                        title: detailedRecipe.title || meal.name,
+                                                        prepTimeMin: detailedRecipe.prepTimeMin,
+                                                        cookTimeMin: detailedRecipe.cookTimeMin,
+                                                        imageUrl: undefined,
+                                                        ingredients: detailedRecipe.ingredients,
+                                                        instructions: detailedRecipe.instructions,
+                                                        tips: detailedRecipe.tips,
+                                                        variations: detailedRecipe.variations,
+                                                        difficulty: detailedRecipe.difficulty,
+                                                        servings: detailedRecipe.servings,
+                                                        nutritionalInfo: detailedRecipe.nutritionalInfo,
+                                                        dietaryTags: detailedRecipe.dietaryTags,
+                                                        imageSignature: detailedRecipe.imageSignature,
+                                                        status: 'ready' as const
+                                                      }
                                                     }
-                                                  }
-                                                : m
-                                            )
-                                          }
-                                        : d
-                                    )
-                                  }
-                                : p
-                            ),
-                            enrichedMealsCount: state.enrichedMealsCount + 1,
-                            lastStateUpdate: Date.now()
-                          }));
+                                                  : m
+                                              )
+                                            }
+                                          : d
+                                      )
+                                    }
+                                  : p
+                              ),
+                              enrichedMealsCount: state.enrichedMealsCount + 1,
+                              lastStateUpdate: Date.now()
+                            };
+
+                            logger.info('MEAL_PLAN_GENERATION_PIPELINE', '✅ STATE UPDATED with enriched meal', {
+                              mealId: meal.id,
+                              mealName: meal.name,
+                              recipeGenerated: true,
+                              status: 'ready',
+                              enrichedCount: updatedState.enrichedMealsCount,
+                              totalToEnrich: state.totalMealsToEnrich,
+                              timestamp: new Date().toISOString()
+                            });
+
+                            return updatedState;
+                          });
 
                           logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Meal enriched successfully', {
                             mealId: meal.id,
@@ -998,39 +1107,80 @@ export const createGenerationActions = (
   },
 
   updateMealImageUrl: (recipeId: string, imageUrl: string) => {
-    logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Updating meal image URL in state', {
+    logger.info('MEAL_PLAN_GENERATION_PIPELINE', '🖼️ IMAGE GENERATION COMPLETE - Updating meal image URL', {
       recipeId,
       imageUrl,
       timestamp: new Date().toISOString()
     });
 
-    set(state => ({
-      mealPlanCandidates: state.mealPlanCandidates.map(plan => ({
-        ...plan,
-        days: plan.days.map(day => ({
-          ...day,
-          meals: day.meals.map(meal => {
-            if (meal.detailedRecipe?.id === recipeId) {
-              logger.debug('MEAL_PLAN_GENERATION_PIPELINE', 'Found matching meal, updating image', {
-                mealName: meal.name,
-                recipeId,
-                imageUrl
-              });
+    let mealFound = false;
+    let mealInfo: any = null;
 
-              return {
-                ...meal,
-                detailedRecipe: {
-                  ...meal.detailedRecipe,
-                  imageUrl
-                }
-              };
-            }
-            return meal;
-          })
-        }))
-      })),
-      lastStateUpdate: Date.now()
-    }));
+    set(state => {
+      const updatedState = {
+        mealPlanCandidates: state.mealPlanCandidates.map(plan => ({
+          ...plan,
+          days: plan.days.map(day => ({
+            ...day,
+            meals: day.meals.map(meal => {
+              if (meal.detailedRecipe?.id === recipeId) {
+                mealFound = true;
+                mealInfo = {
+                  mealId: meal.id,
+                  mealName: meal.name,
+                  mealType: meal.type,
+                  recipeId,
+                  previousImageUrl: meal.detailedRecipe.imageUrl,
+                  newImageUrl: imageUrl
+                };
+
+                logger.info('MEAL_PLAN_GENERATION_PIPELINE', '✅ MATCHED MEAL - Applying image URL', {
+                  mealId: meal.id,
+                  mealName: meal.name,
+                  mealType: meal.type,
+                  recipeId,
+                  previousImageUrl: meal.detailedRecipe.imageUrl,
+                  newImageUrl: imageUrl,
+                  hasDetailedRecipe: !!meal.detailedRecipe,
+                  recipeGenerated: meal.recipeGenerated,
+                  status: meal.status,
+                  timestamp: new Date().toISOString()
+                });
+
+                return {
+                  ...meal,
+                  detailedRecipe: {
+                    ...meal.detailedRecipe,
+                    imageUrl
+                  }
+                };
+              }
+              return meal;
+            })
+          }))
+        })),
+        lastStateUpdate: Date.now()
+      };
+
+      if (mealFound && mealInfo) {
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', '✅ IMAGE URL UPDATED SUCCESSFULLY', {
+          ...mealInfo,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        logger.warn('MEAL_PLAN_GENERATION_PIPELINE', '⚠️ IMAGE UPDATE FAILED - Recipe not found in any meal', {
+          recipeId,
+          imageUrl,
+          candidatesCount: state.mealPlanCandidates.length,
+          totalMeals: state.mealPlanCandidates.reduce((sum, p) =>
+            sum + p.days.reduce((dSum, d) => dSum + d.meals.length, 0), 0
+          ),
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      return updatedState;
+    });
   },
 
   loadProgressFromDatabase: async () => {

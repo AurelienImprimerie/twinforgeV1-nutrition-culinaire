@@ -38,6 +38,46 @@ const MealPlanRecipeCard: React.FC<MealPlanRecipeCardProps> = ({
   const hasImage = meal.detailedRecipe?.imageUrl;
   const isImageLoading = isGenerated && !hasImage;
 
+  // LOG CARD STATE ON RENDER
+  React.useEffect(() => {
+    console.log('🃏 MEAL CARD RENDER', {
+      mealId: meal.id,
+      mealName: meal.name,
+      mealType: meal.type,
+      dayIndex,
+      isGenerated,
+      hasDetailedRecipe: !!meal.detailedRecipe,
+      recipeGenerated: meal.recipeGenerated,
+      status: meal.status,
+      hasImage,
+      imageUrl: meal.detailedRecipe?.imageUrl,
+      recipeId: meal.detailedRecipe?.id,
+      timestamp: new Date().toISOString()
+    });
+  }, [meal.id, meal.name, meal.type, dayIndex, isGenerated, meal.detailedRecipe, meal.recipeGenerated, meal.status, hasImage]);
+
+  // LOG IMAGE LOAD SUCCESS
+  const handleImageLoad = React.useCallback(() => {
+    console.log('✅ IMAGE LOADED SUCCESSFULLY', {
+      mealId: meal.id,
+      mealName: meal.name,
+      imageUrl: meal.detailedRecipe?.imageUrl,
+      timestamp: new Date().toISOString()
+    });
+  }, [meal.id, meal.name, meal.detailedRecipe?.imageUrl]);
+
+  // LOG IMAGE LOAD ERROR
+  const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error('❌ IMAGE LOAD FAILED', {
+      mealId: meal.id,
+      mealName: meal.name,
+      imageUrl: meal.detailedRecipe?.imageUrl,
+      error: 'Image failed to load',
+      timestamp: new Date().toISOString()
+    });
+    (e.target as HTMLImageElement).style.display = 'none';
+  }, [meal.id, meal.name, meal.detailedRecipe?.imageUrl]);
+
   return (
     <MotionDiv
       {...(!isPerformanceMode && isGenerated && {
@@ -103,9 +143,8 @@ const MealPlanRecipeCard: React.FC<MealPlanRecipeCardProps> = ({
               alt={meal.name}
               className="w-full h-full object-cover"
               loading="lazy"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
           </MotionDiv>
         )}
