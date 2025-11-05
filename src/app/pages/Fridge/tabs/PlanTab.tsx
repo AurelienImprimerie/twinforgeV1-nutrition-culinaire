@@ -1,8 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { useUserStore } from '../../../../system/store/userStore';
-import { supabase } from '../../../../system/supabase/client';
 import MealPlanLibraryCTA from '../components/MealPlanLibraryCTA';
 import GlassCard from '../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../ui/icons/SpatialIcon';
@@ -14,27 +11,6 @@ import { ICONS } from '../../../../ui/icons/registry';
  * La génération se fait maintenant via une pipeline dédiée
  */
 const PlanTab: React.FC = () => {
-  const { session } = useUserStore();
-
-  // Vérifier si l'utilisateur a des plans existants
-  const { data: hasExistingPlans = false, isLoading } = useQuery({
-    queryKey: ['meal-plans', 'has-plans', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return false;
-
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .limit(1);
-
-      if (error) return false;
-      return (data?.length || 0) > 0;
-    },
-    enabled: !!session?.user?.id,
-    staleTime: 5 * 1000,
-    refetchOnMount: true
-  });
 
   return (
     <motion.div
@@ -43,8 +19,8 @@ const PlanTab: React.FC = () => {
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="space-y-6"
     >
-      {/* CTA pour Générer des Plans Alimentaires - Adaptatif selon l'état */}
-      <MealPlanLibraryCTA hasExistingPlans={hasExistingPlans} />
+      {/* CTA pour Générer des Plans Alimentaires */}
+      <MealPlanLibraryCTA />
 
       {/* État Vide - Bibliothèque à venir */}
       <GlassCard

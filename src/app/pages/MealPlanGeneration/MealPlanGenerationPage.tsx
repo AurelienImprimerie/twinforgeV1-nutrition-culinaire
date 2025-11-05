@@ -11,7 +11,6 @@ import ConfigurationStage from './stages/ConfigurationStage';
 import GeneratingStage from './stages/GeneratingStage';
 import ValidationStage from './stages/ValidationStage';
 import RecipeDetailsValidationStage from './stages/RecipeDetailsValidationStage';
-import RecipeDetailsGeneratingStage from './stages/RecipeDetailsGeneratingStage';
 import ResumeProgressModal from './components/ResumeProgressModal';
 import { mealPlanProgressService } from '../../../system/services/mealPlanProgressService';
 import logger from '../../../lib/utils/logger';
@@ -23,7 +22,6 @@ const MealPlanGenerationPage: React.FC = () => {
   const { session } = useUserStore();
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [savedSessionInfo, setSavedSessionInfo] = useState<any>(null);
-  const [hasCheckedProgress, setHasCheckedProgress] = useState(false);
 
   const {
     currentStep,
@@ -53,17 +51,8 @@ const MealPlanGenerationPage: React.FC = () => {
 
   useEffect(() => {
     const checkSavedProgress = async () => {
-      // Ne vérifier qu'une seule fois au montage
-      if (hasCheckedProgress) return;
-
       if (session?.user?.id) {
         const summary = await mealPlanProgressService.getProgressSummary(session.user.id);
-
-        logger.info('MEAL_PLAN_GENERATION_PAGE', 'Progress check result', {
-          hasSession: summary.hasSession,
-          currentStep: summary.currentStep,
-          sessionId: summary.sessionId
-        });
 
         if (summary.hasSession && (summary.currentStep === 'validation' || summary.currentStep === 'recipe_details_validation')) {
           setSavedSessionInfo({
@@ -72,19 +61,16 @@ const MealPlanGenerationPage: React.FC = () => {
             updatedAt: summary.updatedAt
           });
           setShowResumeModal(true);
-          setHasCheckedProgress(true);
         } else if (!isActive) {
           startPipeline();
-          setHasCheckedProgress(true);
         }
       } else if (!isActive) {
         startPipeline();
-        setHasCheckedProgress(true);
       }
     };
 
     checkSavedProgress();
-  }, [session?.user?.id, isActive, startPipeline, hasCheckedProgress]);
+  }, [session?.user?.id, isActive, startPipeline]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -153,7 +139,7 @@ const MealPlanGenerationPage: React.FC = () => {
         duration: 4000,
         action: {
           label: 'Voir dans Plans',
-          onClick: () => navigate('/fridge#plan')
+          onClick: () => navigate('/fridge#plans')
         }
       });
       // DO NOT navigate automatically - let user stay on validation screen
@@ -194,7 +180,7 @@ const MealPlanGenerationPage: React.FC = () => {
         duration: 4000,
         action: {
           label: 'Voir dans Plans',
-          onClick: () => navigate('/fridge#plan')
+          onClick: () => navigate('/fridge#plans')
         }
       });
       // DO NOT navigate automatically - let user stay on validation screen
@@ -249,9 +235,6 @@ const MealPlanGenerationPage: React.FC = () => {
     resetPipeline();
     startPipeline();
 
-    // Ne pas revérifier la progression après ce redémarrage intentionnel
-    setHasCheckedProgress(true);
-
     showToast({
       type: 'info',
       title: 'Nouvelle génération',
@@ -272,7 +255,7 @@ const MealPlanGenerationPage: React.FC = () => {
     }
 
     resetPipeline();
-    navigate('/fridge#plan');
+    navigate('/fridge#plans');
   };
 
   const currentStepData = steps.find(s => s.id === currentStep) || steps[0];
@@ -321,7 +304,7 @@ const MealPlanGenerationPage: React.FC = () => {
         <GeneratingStage onExit={handleExit} />
       )}
 
-      {currentStep === 'validation' && loadingState !== 'generating_recipes' && loadingState !== 'streaming_recipes' && (
+      {currentStep === 'validation' && (
         <ValidationStage
           mealPlan={currentMealPlan}
           onSaveBasicPlan={handleSaveBasicPlan}
@@ -329,12 +312,8 @@ const MealPlanGenerationPage: React.FC = () => {
           onDiscard={handleDiscard}
           isSaving={isSaving}
           onExit={handleExit}
-          isGeneratingRecipes={false}
+          isGeneratingRecipes={loadingState === 'generating_recipes' || loadingState === 'streaming_recipes'}
         />
-      )}
-
-      {currentStep === 'validation' && (loadingState === 'generating_recipes' || loadingState === 'streaming_recipes') && (
-        <RecipeDetailsGeneratingStage onExit={handleExit} />
       )}
 
       {currentStep === 'recipe_details_validation' && (

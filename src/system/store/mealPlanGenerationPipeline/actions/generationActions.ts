@@ -475,29 +475,6 @@ export const createGenerationActions = (
               timestamp: new Date().toISOString()
             });
 
-            // Marquer le repas comme en cours de chargement immédiatement
-            set(state => ({
-              mealPlanCandidates: state.mealPlanCandidates.map(p =>
-                p.id === plan.id
-                  ? {
-                      ...p,
-                      days: p.days.map(d =>
-                        d.dayIndex === day.dayIndex
-                          ? {
-                              ...d,
-                              meals: (d.meals || []).map(m =>
-                                m.id === meal.id
-                                  ? { ...m, status: 'loading' as const }
-                                  : m
-                              )
-                            }
-                          : d
-                      )
-                    }
-                  : p
-              )
-            }));
-
             try {
               const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -620,14 +597,6 @@ export const createGenerationActions = (
             }
           }
         }
-      }
-
-      // Sauvegarder les recettes générées dans la progression
-      if (currentSessionId) {
-        await mealPlanProgressService.saveRecipesProgress(
-          currentSessionId,
-          get().mealPlanCandidates
-        );
       }
 
       // Transition vers l'étape de validation finale
