@@ -55,6 +55,15 @@ const MealPlanGenerationPage: React.FC = () => {
   useEffect(() => {
     const checkSavedProgress = async () => {
       if (session?.user?.id) {
+        // Don't show modal if pipeline is already active (generation in progress)
+        if (isActive) {
+          logger.info('MEAL_PLAN_GENERATION_PAGE', 'Pipeline already active, skipping resume modal', {
+            currentStep,
+            currentSessionId
+          });
+          return;
+        }
+
         const summary = await mealPlanProgressService.getProgressSummary(session.user.id);
 
         if (summary.hasSession && (summary.currentStep === 'validation' || summary.currentStep === 'recipe_details_generating' || summary.currentStep === 'recipe_details_validation')) {
@@ -73,7 +82,7 @@ const MealPlanGenerationPage: React.FC = () => {
     };
 
     checkSavedProgress();
-  }, [session?.user?.id, isActive, startPipeline]);
+  }, [session?.user?.id, isActive, startPipeline, currentStep, currentSessionId]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -210,6 +219,21 @@ const MealPlanGenerationPage: React.FC = () => {
   const handleResumeProgress = async () => {
     click();
     setShowResumeModal(false);
+
+    // Check if we're already on the correct session
+    if (savedSessionInfo?.sessionId === currentSessionId && isActive) {
+      logger.info('MEAL_PLAN_GENERATION_PAGE', 'Already on correct session, no need to reload', {
+        sessionId: currentSessionId,
+        currentStep
+      });
+      showToast({
+        type: 'success',
+        title: 'Génération en cours',
+        message: 'Votre génération se poursuit normalement',
+        duration: 3000
+      });
+      return;
+    }
 
     const success = await loadProgressFromDatabase();
     if (success) {
