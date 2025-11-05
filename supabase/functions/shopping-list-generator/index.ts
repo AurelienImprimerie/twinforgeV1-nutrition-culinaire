@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
-import { checkTokenBalance, consumeTokensAtomic, createInsufficientTokensResponse } from '../_shared/tokenMiddleware.ts'
+import { corsHeaders } from './_shared/cors.ts'
+import { checkTokenBalance, consumeTokensAtomic, createInsufficientTokensResponse } from './_shared/tokenMiddleware.ts'
 
 // Simple logger for edge functions
 const logger = {
@@ -216,7 +216,46 @@ Deno.serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: 'Tu es un expert en nutrition et en planification de repas. Tu aides les utilisateurs à créer des listes de courses personnalisées et optimisées.\n\nRÈGLES ABSOLUES JSON:\n1. Réponds UNIQUEMENT avec du JSON valide et bien formé\n2. N\'ajoute AUCUN texte avant ou après le JSON\n3. Utilise UNIQUEMENT des caractères ASCII standard (a-z, A-Z, 0-9, et ponctuation de base)\n4. REMPLACE tous les accents: é→e, è→e, ê→e, à→a, ù→u, ô→o, ç→c, œ→oe\n5. N\'utilise QUE des apostrophes simples \' (pas \' ou \')\n6. N\'utilise QUE des tirets simples - (pas — ou –)\n7. N\'utilise QUE des guillemets doubles " standard (pas " ou ")\n8. Vérifie que TOUS les objets et tableaux sont correctement fermés\n9. PAS de virgules après le dernier élément d\'un tableau ou objet\n10. Maximum 30 articles au total pour garantir un JSON compact et valide\n\nSTRUCTURE REQUISE:\n- 4-6 catégories maximum\n- 5-8 articles par catégorie\n- Total: environ 25-35 articles\n\nCARACTÈRES INTERDITS:\nœ, é, è, ê, à, ù, ô, ç, —, –, \', \', ", "\n\nFormat JSON strict à suivre:\n{\n  "shopping_list": [\n    {\n      "category": "Nom categorie",\n      "items": [\n        {"name": "Item", "quantity": "1kg", "notes": "Note"}\n      ]\n    }\n  ],\n  "suggestions": [],\n  "advice": [],\n  "budget_estimation": {\n    "estimated_cost": "40-60 EUR",\n    "confidence_level": "Moyen",\n    "currency": "EUR",\n    "notes": []\n  }\n}'
+              content: `Tu es un expert en nutrition et en planification de repas. Tu generes des listes de courses optimisees.
+
+REGLES ABSOLUES JSON:
+1. Reponds UNIQUEMENT avec du JSON valide - pas de texte avant ou apres
+2. Commence directement par le caractere { et termine par }
+3. Utilise UNIQUEMENT des caracteres ASCII standard (pas d'accents)
+4. Remplace TOUS les accents: e→e, e→e, e→e, a→a, u→u, o→o, c→c
+5. Utilise QUE des apostrophes simples ' standards
+6. Utilise QUE des tirets simples - standards
+7. Utilise QUE des guillemets doubles " ASCII standard (code 34)
+8. VERIFIE que tous les objets et tableaux sont fermes correctement
+9. PAS de virgule apres le dernier element d'un tableau ou objet
+10. Maximum 35 articles pour garantir un JSON valide
+
+STRUCTURE:
+- 4-6 categories maximum
+- 5-8 articles par categorie
+- Total: 25-35 articles
+
+FORMAT EXACT:
+{
+  "shopping_list": [
+    {
+      "category": "Fruits et legumes",
+      "items": [
+        {"name": "banane", "quantity": "6 unites", "notes": "petit dejeuner"}
+      ]
+    }
+  ],
+  "suggestions": [],
+  "advice": ["Conseil 1", "Conseil 2"],
+  "budget_estimation": {
+    "estimated_cost": "40-60 EUR",
+    "confidence_level": "Moyen",
+    "currency": "EUR",
+    "notes": ["Note 1"]
+  }
+}
+
+IMPORTANT: Ton JSON doit etre parsable par JSON.parse() sans erreur.`
             },
             {
               role: 'user',
@@ -366,34 +405,31 @@ function buildShoppingListPrompt(userProfile: any, mealPlan: any, generationMode
   const isFamily = generationMode === 'user_and_family'
   const country = userProfile.country || 'France'
 
-  // Extract only essential meal data to reduce prompt size
-  const simplifiedMeals = mealPlan.days?.map((day: any) => ({
-    day: day.day_number,
-    meals: [
-      day.breakfast?.name,
-      day.lunch?.name,
-      day.dinner?.name
-    ].filter(Boolean)
-  })) || [];
+  // Extract meal names only to keep prompt compact
+  const mealsList: string[] = [];
+  mealPlan.days?.forEach((day: any) => {
+    if (day.breakfast?.name) mealsList.push(day.breakfast.name);
+    if (day.lunch?.name) mealsList.push(day.lunch.name);
+    if (day.dinner?.name) mealsList.push(day.dinner.name);
+  });
 
-  return `
-Genere une liste de courses pour ${isFamily ? '2-4 personnes' : '1 personne'} en ${country}.
+  const allergies = userProfile.constraints?.allergies?.join(', ') || 'Aucune';
 
-REPAS:
-${JSON.stringify(simplifiedMeals)}
+  return `Genere une liste de courses pour ${isFamily ? '2-4 personnes' : '1 personne'} en ${country}.
 
-RESTRICTIONS:
-${userProfile.constraints?.allergies?.join(', ') || 'Aucune'}
+REPAS (${mealsList.length}):
+${mealsList.join(', ')}
 
-INSTRUCTIONS:
-1. Liste les ingredients de TOUS les repas
-2. Quantites pour ${isFamily ? '2-4 pers' : '1 pers'}
-3. 25-35 articles total
-4. Budget realiste pour ${country}
-5. JSON valide uniquement, AUCUN accent ni caractere special
+ALLERGIES: ${allergies}
 
-Reponds uniquement avec le JSON.
-`
+CONSIGNES:
+- Ingredients pour TOUS les repas
+- Quantites pour ${isFamily ? '2-4 pers' : '1 pers'}
+- 25-35 articles total maximum
+- Budget realiste pour ${country}
+- JSON valide sans accents
+
+Reponds uniquement avec le JSON, rien d'autre.`;
 }
 
 function calculateAge(birthdate: string): number {
@@ -459,39 +495,47 @@ function parseBudgetString(budgetStr: string): { minCents: number; maxCents: num
 
 /**
  * Comprehensive JSON sanitization to fix common AI-generated JSON issues
+ * This version is more conservative to avoid breaking valid JSON
  */
 function sanitizeJSON(jsonString: string): string {
   try {
-    // Step 1: Replace problematic Unicode characters
+    // Step 1: Replace problematic Unicode characters with safe alternatives
+    // CRITICAL: Do NOT replace standard double quotes (") which are needed for JSON
     jsonString = jsonString
-      .replace(/\u2013/g, '-')      // en-dash
-      .replace(/\u2014/g, '-')      // em-dash
-      .replace(/\u2018/g, "'")      // left single quote
-      .replace(/\u2019/g, "'")      // right single quote
-      .replace(/\u201C/g, '"')      // left double quote
-      .replace(/\u201D/g, '"')      // right double quote
+      .replace(/\u2013/g, '-')      // en-dash → hyphen
+      .replace(/\u2014/g, '-')      // em-dash → hyphen
+      .replace(/\u2018/g, "'")      // left single quote → apostrophe
+      .replace(/\u2019/g, "'")      // right single quote → apostrophe
+      .replace(/\u201C/g, '"')      // left double quote → standard quote
+      .replace(/\u201D/g, '"')      // right double quote → standard quote
       .replace(/\u0153/g, 'oe')     // œ ligature
-      .replace(/\u00E9/g, 'e')      // é
-      .replace(/\u00E8/g, 'e')      // è
-      .replace(/\u00EA/g, 'e')      // ê
-      .replace(/\u00E0/g, 'a')      // à
-      .replace(/\u00F9/g, 'u')      // ù
-      .replace(/\u00FB/g, 'u')      // û
-      .replace(/\u00EE/g, 'i')      // î
-      .replace(/\u00EF/g, 'i')      // ï
-      .replace(/\u00F4/g, 'o')      // ô
-      .replace(/\u00E7/g, 'c');     // ç
+      .replace(/\u00E9/g, 'e')      // é → e
+      .replace(/\u00E8/g, 'e')      // è → e
+      .replace(/\u00EA/g, 'e')      // ê → e
+      .replace(/\u00EB/g, 'e')      // ë → e
+      .replace(/\u00E0/g, 'a')      // à → a
+      .replace(/\u00E2/g, 'a')      // â → a
+      .replace(/\u00E4/g, 'a')      // ä → a
+      .replace(/\u00F9/g, 'u')      // ù → u
+      .replace(/\u00FB/g, 'u')      // û → u
+      .replace(/\u00FC/g, 'u')      // ü → u
+      .replace(/\u00EE/g, 'i')      // î → i
+      .replace(/\u00EF/g, 'i')      // ï → i
+      .replace(/\u00F4/g, 'o')      // ô → o
+      .replace(/\u00F6/g, 'o')      // ö → o
+      .replace(/\u00E7/g, 'c');     // ç → c
 
-    // Step 2: Remove control characters except whitespace
-    jsonString = jsonString.replace(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g, ' ');
+    // Step 2: Remove ONLY dangerous control characters, preserve valid whitespace
+    // Keep: \t (tab=9), \n (newline=10), \r (return=13), space (32)
+    // Remove: 0-8, 11-12, 14-31, 127-159
+    jsonString = jsonString.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, '');
 
     // Step 3: Fix trailing commas before closing brackets/braces
     jsonString = jsonString.replace(/,\s*([\]}])/g, '$1');
 
-    // Step 4: Ensure proper string escaping
-    jsonString = jsonString.replace(/([^\\])\n/g, '$1\\n');
-    jsonString = jsonString.replace(/([^\\])\r/g, '$1\\r');
-    jsonString = jsonString.replace(/([^\\])\t/g, '$1\\t');
+    // Step 4: DO NOT escape newlines/tabs that are already inside strings properly
+    // This step was breaking valid JSON by adding extra escapes
+    // Skip this step - let JSON.parse handle proper string content
 
     return jsonString;
   } catch (err) {
@@ -564,7 +608,7 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
       }
     }
 
-    // Extract first complete JSON object
+    // Extract first complete JSON object - use a more precise regex
     const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       logger.error('[PARSE_ERROR] No JSON found in AI response', {
@@ -578,11 +622,22 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
 
     logger.debug('[PARSE_JSON_MATCH] JSON pattern found', {
       matchLength: jsonString.length,
-      matchPreview: jsonString.substring(0, 500) + '...'
+      matchPreview: jsonString.substring(0, 500) + '...',
+      firstChar: jsonString.charCodeAt(0),
+      firstTenChars: jsonString.substring(0, 10).split('').map(c => c.charCodeAt(0))
     });
 
-    // Step 2: Sanitize the JSON string
+    // Step 2: Sanitize the JSON string BEFORE attempting to parse
+    const originalString = jsonString;
     jsonString = sanitizeJSON(jsonString);
+
+    logger.debug('[PARSE_SANITIZED] After sanitization', {
+      originalLength: originalString.length,
+      sanitizedLength: jsonString.length,
+      firstChar: jsonString.charCodeAt(0),
+      firstTenChars: jsonString.substring(0, 10).split('').map(c => c.charCodeAt(0)),
+      preview: jsonString.substring(0, 200)
+    });
 
     // Step 3: Attempt initial parse
     let parsedResponse: any;
@@ -591,7 +646,9 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
       logger.info('[PARSE_SUCCESS] JSON parsed successfully on first attempt');
     } catch (firstError) {
       logger.warn('[PARSE_RETRY] First parse failed, attempting repair', {
-        error: firstError.message
+        error: firstError.message,
+        jsonPreview: jsonString.substring(0, 300),
+        jsonFirstChars: Array.from(jsonString.substring(0, 50)).map((c, i) => `[${i}]=${c} (${c.charCodeAt(0)})`).join(' ')
       });
 
       // Step 4: Try to repair truncated JSON
@@ -606,9 +663,23 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
           repairError: secondError.message,
           jsonLength: repairedJSON.length,
           jsonPreview: repairedJSON.substring(0, 300),
-          jsonEnd: repairedJSON.substring(Math.max(0, repairedJSON.length - 300))
+          jsonEnd: repairedJSON.substring(Math.max(0, repairedJSON.length - 300)),
+          firstTenBytes: Array.from(repairedJSON.substring(0, 10)).map(c => c.charCodeAt(0))
         });
-        throw secondError;
+
+        // Last resort: try to parse the original unsanitized string
+        try {
+          logger.warn('[PARSE_LAST_RESORT] Attempting to parse original unsanitized JSON');
+          parsedResponse = JSON.parse(originalString);
+          logger.info('[PARSE_SUCCESS] Original unsanitized JSON parsed successfully');
+        } catch (thirdError) {
+          logger.error('[PARSE_FATAL] All parsing attempts failed', {
+            error1: firstError.message,
+            error2: secondError.message,
+            error3: thirdError.message
+          });
+          throw secondError;
+        }
       }
     }
 
