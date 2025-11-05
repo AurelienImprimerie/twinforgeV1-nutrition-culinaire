@@ -1259,9 +1259,10 @@ export const createGenerationActions = (
 
                 return {
                   ...meal,
+                  imageUrl, // Set at meal level for library display
                   detailedRecipe: {
                     ...meal.detailedRecipe,
-                    imageUrl
+                    imageUrl // Also set at detailedRecipe level
                   }
                 };
               }

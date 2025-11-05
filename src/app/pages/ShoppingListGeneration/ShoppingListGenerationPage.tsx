@@ -71,7 +71,7 @@ const ShoppingListGenerationPage: React.FC = () => {
         duration: 3000
       });
       setTimeout(() => {
-        navigate('/fridge?tab=shopping');
+        navigate('/fridge#shopping');
       }, 1500);
     } catch (error) {
       showToast({
@@ -98,7 +98,7 @@ const ShoppingListGenerationPage: React.FC = () => {
       if (!confirmed) return;
     }
     resetPipeline();
-    navigate('/fridge?tab=shopping');
+    navigate('/fridge#shopping');
   };
 
   const currentStepData = steps.find(s => s.id === currentStep) || steps[0];

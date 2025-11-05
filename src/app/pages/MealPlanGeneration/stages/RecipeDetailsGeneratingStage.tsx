@@ -34,9 +34,19 @@ const RecipeDetailsGeneratingStage: React.FC<RecipeDetailsGeneratingStageProps> 
   }
 
   const progressPercentage = totalMeals > 0 ? Math.round((generatedMeals / totalMeals) * 100) : 0;
-  // FIXED: Show cards when we're enriching recipes OR have generated meals
-  // Previously used 'streaming_recipes' which never exists in the code
-  const isStreaming = (loadingState === 'enriching' || loadingState === 'streaming') && generatedMeals > 0;
+
+  // CRITICAL FIX: Keep cards visible throughout entire stage 2 until step transition
+  // Show cards when:
+  // 1. We're enriching recipes (loadingState === 'enriching')
+  // 2. OR we have generated meals and are still streaming/generating
+  // 3. OR we have meals but images are still generating
+  const { imagesGeneratedCount, totalImagesToGenerate } = useMealPlanGenerationPipeline();
+  const imagesStillGenerating = imagesGeneratedCount < totalImagesToGenerate;
+  const isStreaming = (
+    (loadingState === 'enriching' || loadingState === 'streaming') && generatedMeals > 0
+  ) || (
+    generatedMeals > 0 && imagesStillGenerating
+  );
 
   // Collect all recipe IDs for realtime listening
   const recipeIds = useMemo(() => {

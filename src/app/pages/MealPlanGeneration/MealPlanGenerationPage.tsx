@@ -195,7 +195,7 @@ const MealPlanGenerationPage: React.FC = () => {
 
       // Automatic redirect to Plan tab after successful save
       setTimeout(() => {
-        navigate('/fridge?tab=plan');
+        navigate('/fridge#plan');
       }, 1500);
     } catch (error) {
       showToast({
