@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         model: 'gpt-5-mini',
         prompt_length: prompt.length,
         has_system_message: true,
-        max_completion_tokens: 15000
+        max_completion_tokens: 8000
       });
 
       // Call OpenAI API with GPT-5-mini
@@ -213,14 +213,14 @@ Deno.serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: 'Tu es un expert en nutrition et en planification de repas. Tu aides les utilisateurs à créer des listes de courses personnalisées et optimisées.\n\nRÈGLES ABSOLUES QUE TU DOIS RESPECTER:\n1. Tu dois TOUJOURS générer une liste COMPLÈTE et DÉTAILLÉE avec un MINIMUM de 30-50 articles uniques\n2. CHAQUE catégorie doit contenir AU MINIMUM 5-10 articles\n3. Tu dois ANALYSER EN DÉTAIL chaque repas du plan alimentaire et LISTER TOUS les ingrédients\n4. Tu dois INCLURE les ingrédients de base (huile, sel, poivre, épices, condiments, etc.)\n5. Tu dois TOUJOURS retourner du JSON valide et COMPLET\n6. JAMAIS de liste minimaliste ou incomplète - c\'est INACCEPTABLE\n7. IMPORTANT: N\'utilise QUE des caractères JSON-safe. Évite les caractères spéciaux Unicode comme œ (utilise oe), les tirets longs — (utilise -), les apostrophes courbes \' (utilise \'), etc.\n\nSTRUCTURE MINIMALE REQUISE:\n- Fruits & Légumes: minimum 8-12 articles\n- Viandes & Poissons: minimum 4-6 articles\n- Produits laitiers: minimum 3-5 articles\n- Épicerie: minimum 6-10 articles\n- Boulangerie: minimum 2-3 articles\n- Condiments & Épices: minimum 4-6 articles\n\nSi le plan de repas contient 7 jours de repas (petit-déjeuner, déjeuner, dîner), tu DOIS générer une liste proportionnellement complète.\n\nCARACTÈRES À ÉVITER:\n- N\'utilise PAS œ (utilise oe à la place)\n- N\'utilise PAS — ou – (utilise - à la place)\n- N\'utilise PAS \' ou \' (utilise \' à la place)\n- Évite tous les caractères Unicode spéciaux qui ne sont pas standard ASCII/UTF-8'
+              content: 'Tu es un expert en nutrition et en planification de repas. Tu aides les utilisateurs à créer des listes de courses personnalisées et optimisées.\n\nRÈGLES ABSOLUES JSON:\n1. Réponds UNIQUEMENT avec du JSON valide et bien formé\n2. N\'ajoute AUCUN texte avant ou après le JSON\n3. Utilise UNIQUEMENT des caractères ASCII standard (a-z, A-Z, 0-9, et ponctuation de base)\n4. REMPLACE tous les accents: é→e, è→e, ê→e, à→a, ù→u, ô→o, ç→c, œ→oe\n5. N\'utilise QUE des apostrophes simples \' (pas \' ou \')\n6. N\'utilise QUE des tirets simples - (pas — ou –)\n7. N\'utilise QUE des guillemets doubles " standard (pas " ou ")\n8. Vérifie que TOUS les objets et tableaux sont correctement fermés\n9. PAS de virgules après le dernier élément d\'un tableau ou objet\n10. Maximum 30 articles au total pour garantir un JSON compact et valide\n\nSTRUCTURE REQUISE:\n- 4-6 catégories maximum\n- 5-8 articles par catégorie\n- Total: environ 25-35 articles\n\nCARACTÈRES INTERDITS:\nœ, é, è, ê, à, ù, ô, ç, —, –, \', \', ", "\n\nFormat JSON strict à suivre:\n{\n  "shopping_list": [\n    {\n      "category": "Nom categorie",\n      "items": [\n        {"name": "Item", "quantity": "1kg", "notes": "Note"}\n      ]\n    }\n  ],\n  "suggestions": [],\n  "advice": [],\n  "budget_estimation": {\n    "estimated_cost": "40-60 EUR",\n    "confidence_level": "Moyen",\n    "currency": "EUR",\n    "notes": []\n  }\n}'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          max_completion_tokens: 15000
+          max_completion_tokens: 8000
         }),
       })
 
@@ -363,71 +363,33 @@ function buildShoppingListPrompt(userProfile: any, mealPlan: any, generationMode
   const isFamily = generationMode === 'user_and_family'
   const country = userProfile.country || 'France'
 
+  // Extract only essential meal data to reduce prompt size
+  const simplifiedMeals = mealPlan.days?.map((day: any) => ({
+    day: day.day_number,
+    meals: [
+      day.breakfast?.name,
+      day.lunch?.name,
+      day.dinner?.name
+    ].filter(Boolean)
+  })) || [];
+
   return `
-Génère une liste de courses COMPLÈTE et DÉTAILLÉE basée sur les informations suivantes :
+Genere une liste de courses pour ${isFamily ? '2-4 personnes' : '1 personne'} en ${country}.
 
-**PROFIL UTILISATEUR :**
-- Pays : ${country}
-- Sexe : ${userProfile.sex || 'Non spécifié'}
-- Âge : ${userProfile.birthdate ? calculateAge(userProfile.birthdate) : 'Non spécifié'} ans
-- Taille : ${userProfile.height_cm || 'Non spécifié'} cm
-- Poids : ${userProfile.weight_kg || 'Non spécifié'} kg
-- Objectif : ${userProfile.objective || 'Non spécifié'}
-- Niveau activité : ${userProfile.activity_level || 'Non spécifié'}
-- Préférences alimentaires : ${JSON.stringify(userProfile.food_preferences || {})}
-- Restrictions alimentaires : ${JSON.stringify(userProfile.constraints || {})}
-- Équipement cuisine : ${JSON.stringify(userProfile.kitchen_equipment || {})}
-- Détails foyer : ${JSON.stringify(userProfile.household_details || {})}
+REPAS:
+${JSON.stringify(simplifiedMeals)}
 
-**PLAN DE REPAS :**
-${JSON.stringify(mealPlan, null, 2)}
+RESTRICTIONS:
+${userProfile.constraints?.allergies?.join(', ') || 'Aucune'}
 
-**MODE DE GÉNÉRATION :** ${isFamily ? 'Liste familiale (2-4 personnes)' : 'Liste personnelle (1 personne)'}
+INSTRUCTIONS:
+1. Liste les ingredients de TOUS les repas
+2. Quantites pour ${isFamily ? '2-4 pers' : '1 pers'}
+3. 25-35 articles total
+4. Budget realiste pour ${country}
+5. JSON valide uniquement, AUCUN accent ni caractere special
 
-**INSTRUCTIONS CRITIQUES :**
-1. ANALYSE CHAQUE REPAS du plan alimentaire et LISTE TOUS LES INGRÉDIENTS nécessaires
-2. INCLUS les quantités précises pour ${isFamily ? '2-4 personnes' : '1 personne'}
-3. AJOUTE les ingrédients de base manquants (huile, sel, poivre, épices courantes, etc.)
-4. CATÉGORISE intelligemment (Fruits & Légumes, Viandes & Poissons, Produits laitiers, Épicerie, etc.)
-5. GÉNÈRE une liste substantielle (minimum 30-50 articles uniques pour une semaine complète)
-6. CHAQUE CATÉGORIE doit contenir 8-12 articles minimum
-7. ADAPTE les quantités selon le mode familial ou personnel
-8. CONSIDÈRE les besoins nutritionnels et les objectifs de l'utilisateur
-9. INCLUS des articles complémentaires logiques (condiments, assaisonnements, etc.)
-
-**FORMAT DE RÉPONSE REQUIS (JSON strict) :**
-{
-  "shopping_list": [
-    {
-      "category": "Fruits & Légumes",
-      "items": [
-        {
-          "name": "Tomates cerises",
-          "quantity": "500g",
-          "notes": "Pour les salades"
-        }
-      ]
-    }
-  ],
-  "suggestions": [
-    {
-      "name": "Huile olive extra vierge",
-      "reason": "Indispensable pour la cuisson",
-      "category": "Épicerie"
-    }
-  ],
-  "advice": [
-    "Privilégiez les produits de saison"
-  ],
-  "budget_estimation": {
-    "estimated_cost": "45-65€",
-    "confidence_level": "Élevé",
-    "currency": "EUR",
-    "notes": ["Prix basés sur les moyennes ${country}"]
-  }
-}
-
-IMPORTANT : Réponds UNIQUEMENT avec le JSON, sans texte supplémentaire.
+Reponds uniquement avec le JSON.
 `
 }
 
@@ -492,6 +454,93 @@ function parseBudgetString(budgetStr: string): { minCents: number; maxCents: num
   }
 }
 
+/**
+ * Comprehensive JSON sanitization to fix common AI-generated JSON issues
+ */
+function sanitizeJSON(jsonString: string): string {
+  try {
+    // Step 1: Replace problematic Unicode characters
+    jsonString = jsonString
+      .replace(/\u2013/g, '-')      // en-dash
+      .replace(/\u2014/g, '-')      // em-dash
+      .replace(/\u2018/g, "'")      // left single quote
+      .replace(/\u2019/g, "'")      // right single quote
+      .replace(/\u201C/g, '"')      // left double quote
+      .replace(/\u201D/g, '"')      // right double quote
+      .replace(/\u0153/g, 'oe')     // œ ligature
+      .replace(/\u00E9/g, 'e')      // é
+      .replace(/\u00E8/g, 'e')      // è
+      .replace(/\u00EA/g, 'e')      // ê
+      .replace(/\u00E0/g, 'a')      // à
+      .replace(/\u00F9/g, 'u')      // ù
+      .replace(/\u00FB/g, 'u')      // û
+      .replace(/\u00EE/g, 'i')      // î
+      .replace(/\u00EF/g, 'i')      // ï
+      .replace(/\u00F4/g, 'o')      // ô
+      .replace(/\u00E7/g, 'c');     // ç
+
+    // Step 2: Remove control characters except whitespace
+    jsonString = jsonString.replace(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g, ' ');
+
+    // Step 3: Fix trailing commas before closing brackets/braces
+    jsonString = jsonString.replace(/,\s*([\]}])/g, '$1');
+
+    // Step 4: Ensure proper string escaping
+    jsonString = jsonString.replace(/([^\\])\n/g, '$1\\n');
+    jsonString = jsonString.replace(/([^\\])\r/g, '$1\\r');
+    jsonString = jsonString.replace(/([^\\])\t/g, '$1\\t');
+
+    return jsonString;
+  } catch (err) {
+    logger.error('[SANITIZE_ERROR] Error during JSON sanitization', { error: err.message });
+    return jsonString;
+  }
+}
+
+/**
+ * Attempt to repair truncated JSON by completing missing closing brackets
+ */
+function attemptJSONRepair(jsonString: string): string {
+  try {
+    // Count opening and closing braces/brackets
+    const openBraces = (jsonString.match(/\{/g) || []).length;
+    const closeBraces = (jsonString.match(/\}/g) || []).length;
+    const openBrackets = (jsonString.match(/\[/g) || []).length;
+    const closeBrackets = (jsonString.match(/\]/g) || []).length;
+
+    logger.debug('[JSON_REPAIR] Analyzing JSON structure', {
+      openBraces,
+      closeBraces,
+      openBrackets,
+      closeBrackets
+    });
+
+    let repaired = jsonString;
+
+    // Add missing closing brackets
+    for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+      repaired += ']';
+    }
+
+    // Add missing closing braces
+    for (let i = 0; i < (openBraces - closeBraces); i++) {
+      repaired += '}';
+    }
+
+    if (repaired !== jsonString) {
+      logger.info('[JSON_REPAIR] JSON repaired', {
+        addedBrackets: openBrackets - closeBrackets,
+        addedBraces: openBraces - closeBraces
+      });
+    }
+
+    return repaired;
+  } catch (err) {
+    logger.error('[JSON_REPAIR_ERROR] Error during JSON repair', { error: err.message });
+    return jsonString;
+  }
+}
+
 function parseAIResponse(aiContent: string, country: string): ShoppingListResponse {
   logger.debug('[PARSE_START] Starting to parse AI response', {
     content_length: aiContent.length,
@@ -500,44 +549,65 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
   });
 
   try {
-    // Clean the response to extract JSON
-    const jsonMatch = aiContent.match(/\{[\s\S]*\}/)
+    // Step 1: Extract JSON from markdown code blocks or plain text
+    let jsonString = aiContent.trim();
+
+    // Remove markdown code blocks if present
+    if (jsonString.startsWith('```')) {
+      const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        jsonString = codeBlockMatch[1].trim();
+        logger.debug('[PARSE_MARKDOWN] Extracted JSON from markdown code block');
+      }
+    }
+
+    // Extract first complete JSON object
+    const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       logger.error('[PARSE_ERROR] No JSON found in AI response', {
-        aiContent,
-        aiContentLength: aiContent.length
+        aiContentLength: aiContent.length,
+        firstChars: aiContent.substring(0, 200)
       });
-      throw new Error('No JSON found in AI response')
+      throw new Error('No JSON found in AI response');
     }
+
+    jsonString = jsonMatch[0];
 
     logger.debug('[PARSE_JSON_MATCH] JSON pattern found', {
-      matchLength: jsonMatch[0].length,
-      matchPreview: jsonMatch[0].substring(0, 500) + '...'
+      matchLength: jsonString.length,
+      matchPreview: jsonString.substring(0, 500) + '...'
     });
 
-    // Sanitize JSON string - fix common issues with control characters and malformed strings
-    let jsonString = jsonMatch[0];
+    // Step 2: Sanitize the JSON string
+    jsonString = sanitizeJSON(jsonString);
 
-    // Step 1: Replace problematic Unicode characters that break JSON.parse
+    // Step 3: Attempt initial parse
+    let parsedResponse: any;
     try {
-      // Replace em-dash, en-dash with regular dash
-      jsonString = jsonString.replace(/\u2013/g, '-').replace(/\u2014/g, '-');
-      // Replace special apostrophes with regular apostrophe
-      jsonString = jsonString.replace(/\u2018/g, "'").replace(/\u2019/g, "'");
-      // Replace special quotes with regular quotes
-      jsonString = jsonString.replace(/\u201C/g, '"').replace(/\u201D/g, '"');
-      // Replace œ ligature with oe
-      jsonString = jsonString.replace(/\u0153/g, 'oe');
+      parsedResponse = JSON.parse(jsonString);
+      logger.info('[PARSE_SUCCESS] JSON parsed successfully on first attempt');
+    } catch (firstError) {
+      logger.warn('[PARSE_RETRY] First parse failed, attempting repair', {
+        error: firstError.message
+      });
 
-      logger.debug('[PARSE_SANITIZE_UNICODE] After Unicode cleanup');
-    } catch (err) {
-      console.error('[PARSE_SANITIZE_ERROR] Error during Unicode cleanup:', err);
+      // Step 4: Try to repair truncated JSON
+      const repairedJSON = attemptJSONRepair(jsonString);
+
+      try {
+        parsedResponse = JSON.parse(repairedJSON);
+        logger.info('[PARSE_SUCCESS] JSON parsed successfully after repair');
+      } catch (secondError) {
+        logger.error('[PARSE_ERROR] JSON parsing failed even after repair', {
+          originalError: firstError.message,
+          repairError: secondError.message,
+          jsonLength: repairedJSON.length,
+          jsonPreview: repairedJSON.substring(0, 300),
+          jsonEnd: repairedJSON.substring(Math.max(0, repairedJSON.length - 300))
+        });
+        throw secondError;
+      }
     }
-
-    // Step 2: Remove control characters (newlines, tabs in string values)
-    jsonString = jsonString.replace(/[\u0000-\u001F]+/g, ' ');
-
-    const parsedResponse = JSON.parse(jsonString)
 
     logger.info('[PARSE_SUCCESS] JSON parsed successfully', {
       hasShoppingList: !!parsedResponse.shopping_list,
@@ -612,7 +682,7 @@ function parseAIResponse(aiContent: string, country: string): ShoppingListRespon
     if (totalItems === 0) {
       logger.error('[PARSE_CRITICAL] ZERO items in final result!');
     } else if (totalItems < 10) {
-      logger.warn(`[PARSE_WARNING] Only ${totalItems} items generated - expected 30-50+`);
+      logger.warn(`[PARSE_WARNING] Only ${totalItems} items generated - expected 25-35`);
     }
 
     return result;
