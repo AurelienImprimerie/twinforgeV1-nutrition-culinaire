@@ -10,6 +10,7 @@ import MealPlanGenerationProgressHeader from './components/MealPlanGenerationPro
 import ConfigurationStage from './stages/ConfigurationStage';
 import GeneratingStage from './stages/GeneratingStage';
 import ValidationStage from './stages/ValidationStage';
+import RecipeDetailsGeneratingStage from './stages/RecipeDetailsGeneratingStage';
 import RecipeDetailsValidationStage from './stages/RecipeDetailsValidationStage';
 import ResumeProgressModal from './components/ResumeProgressModal';
 import { mealPlanProgressService } from '../../../system/services/mealPlanProgressService';
@@ -260,6 +261,7 @@ const MealPlanGenerationPage: React.FC = () => {
 
   const currentStepData = steps.find(s => s.id === currentStep) || steps[0];
   const isGenerating = loadingState === 'generating' || loadingState === 'streaming';
+  const isGeneratingRecipes = loadingState === 'generating_recipes' || loadingState === 'streaming_recipes';
   const isSaving = loadingState === 'saving';
   const currentMealPlan = mealPlanCandidates.length > 0 ? mealPlanCandidates[0] : null;
 
@@ -312,7 +314,12 @@ const MealPlanGenerationPage: React.FC = () => {
           onDiscard={handleDiscard}
           isSaving={isSaving}
           onExit={handleExit}
-          isGeneratingRecipes={loadingState === 'generating_recipes' || loadingState === 'streaming_recipes'}
+        />
+      )}
+
+      {currentStep === 'recipe_details_generating' && (
+        <RecipeDetailsGeneratingStage
+          onExit={handleExit}
         />
       )}
 

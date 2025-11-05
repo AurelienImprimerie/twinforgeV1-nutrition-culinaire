@@ -15,7 +15,6 @@ interface ValidationStageProps {
   onDiscard: () => void;
   isSaving: boolean;
   onExit: () => void;
-  isGeneratingRecipes: boolean;
 }
 
 const ValidationStage: React.FC<ValidationStageProps> = ({
@@ -24,27 +23,17 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
   onGenerateAllRecipes,
   onDiscard,
   isSaving,
-  onExit,
-  isGeneratingRecipes
+  onExit
 }) => {
   const { isPerformanceMode } = usePerformanceMode();
-  const { currentStep, processedRecipesCount, totalRecipesToGenerate, lastStateUpdate } = useMealPlanGenerationPipeline();
   const MotionDiv = isPerformanceMode ? 'div' : motion.div;
-
-  // Force re-render when recipes are generated
-  React.useEffect(() => {
-    // This ensures the UI updates as recipes are generated
-  }, [lastStateUpdate, processedRecipesCount, mealPlan]);
 
   if (!mealPlan) {
     return null;
   }
 
-  const weekCount = mealPlan.days.length / 7;
+  const weekCount = Math.ceil(mealPlan.days.length / 7);
   const totalMeals = mealPlan.days.reduce((sum, day) => sum + (day.meals?.length || 0), 0);
-  const recipesGenerated = mealPlan.days.reduce((sum, day) =>
-    sum + (day.meals?.filter(m => m.recipeGenerated && m.status === 'ready').length || 0), 0
-  );
 
   return (
     <div className="space-y-6">
@@ -98,29 +87,22 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white mb-1">
-                  {isGeneratingRecipes ? 'Génération des Recettes en cours...' : 'Votre Plan Alimentaire est Prêt !'}
+                  Votre Plan Alimentaire est Prêt !
                 </h2>
                 <div className="flex items-center gap-3">
                   <p className="text-white/70">
                     {weekCount} semaine{weekCount > 1 ? 's' : ''} · {totalMeals} repas planifiés
-                    {isGeneratingRecipes && ` · ${processedRecipesCount || recipesGenerated}/${totalMeals} recettes générées`}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              {isGeneratingRecipes && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-violet-400/20 border border-violet-400/30">
-                  <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
-                  <span className="text-violet-400 text-sm font-medium">En cours</span>
-                </div>
-              )}
               <button
                 onClick={onDiscard}
-                disabled={isSaving || isGeneratingRecipes}
+                disabled={isSaving}
                 className={`px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-200 ${
-                  (isSaving || isGeneratingRecipes) ? 'opacity-50 cursor-not-allowed' : ''
+                  isSaving ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 Régénérer
@@ -210,7 +192,7 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                         })}
                       </div>
 
-                      {/* Meals List with Icons and Skeletons */}
+                      {/* Meals List with Icons */}
                       <div className="space-y-2">
                         {day.meals?.map((meal, mealIndex) => {
                           const mealIcons = {
@@ -220,57 +202,42 @@ const ValidationStage: React.FC<ValidationStageProps> = ({
                             snack: ICONS.Cookie
                           };
 
-                          const isLoading = isGeneratingRecipes && meal.status === 'loading';
-
                           return (
                             <div
                               key={`meal-${mealIndex}`}
                               className="flex items-start gap-2 p-2 rounded"
                               style={{
-                                background: isLoading ? 'rgba(139, 92, 246, 0.05)' : 'rgba(139, 92, 246, 0.08)',
-                                opacity: isLoading ? 0.7 : 1
+                                background: 'rgba(139, 92, 246, 0.08)'
                               }}
                             >
-                              {isLoading ? (
-                                <>
-                                  <SkeletonBase width="24px" height="24px" borderRadius="4px" className="flex-shrink-0 mt-0.5" />
-                                  <div className="flex-1 min-w-0">
-                                    <SkeletonBase width="80%" height="14px" className="mb-1" />
-                                    <SkeletonBase width="60%" height="12px" />
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div
-                                    className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
-                                    style={{
-                                      background: 'rgba(139, 92, 246, 0.2)',
-                                      border: '1px solid rgba(139, 92, 246, 0.3)'
-                                    }}
-                                  >
-                                    <SpatialIcon
-                                      Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
-                                      size={14}
-                                      className="text-violet-400"
-                                    />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-white/90 text-sm font-medium leading-tight">
-                                      {meal.name}
-                                    </p>
-                                    {meal.ingredients && meal.ingredients.length > 0 && (
-                                      <p className="text-white/50 text-xs mt-1 line-clamp-1">
-                                        {meal.ingredients.slice(0, 3).join(', ')}
-                                      </p>
-                                    )}
-                                    {meal.calories && (
-                                      <p className="text-violet-400/80 text-xs mt-1">
-                                        {meal.calories} kcal
-                                      </p>
-                                    )}
-                                  </div>
-                                </>
-                              )}
+                              <div
+                                className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
+                                style={{
+                                  background: 'rgba(139, 92, 246, 0.2)',
+                                  border: '1px solid rgba(139, 92, 246, 0.3)'
+                                }}
+                              >
+                                <SpatialIcon
+                                  Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
+                                  size={14}
+                                  className="text-violet-400"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white/90 text-sm font-medium leading-tight">
+                                  {meal.name}
+                                </p>
+                                {meal.ingredients && meal.ingredients.length > 0 && (
+                                  <p className="text-white/50 text-xs mt-1 line-clamp-1">
+                                    {meal.ingredients.slice(0, 3).join(', ')}
+                                  </p>
+                                )}
+                                {meal.calories && (
+                                  <p className="text-violet-400/80 text-xs mt-1">
+                                    {meal.calories} kcal
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           );
                         })}

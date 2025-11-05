@@ -17,7 +17,7 @@ const STEP_ICONS: Record<string, keyof typeof ICONS> = {
   generating: 'Sparkles',
   validation: 'Calendar',
   recipe_details_generating: 'ChefHat',
-  recipe_details_validation: 'Check',
+  recipe_details_validation: 'Check'
 };
 
 const MealPlanGenerationProgressHeader: React.FC<MealPlanGenerationProgressHeaderProps> = ({
@@ -30,9 +30,9 @@ const MealPlanGenerationProgressHeader: React.FC<MealPlanGenerationProgressHeade
 
   // Show days/recipes count in subtitle when generating
   let dynamicSubtitle = currentStep.subtitle;
-  if (storeCurrentStep === 'generating' && totalDaysToGenerate > 0) {
+  if (storeCurrentStep === 'generating' && totalDaysToGenerate > 0 && receivedDaysCount > 0) {
     dynamicSubtitle = `${receivedDaysCount}/${totalDaysToGenerate} jours générés`;
-  } else if ((storeCurrentStep === 'validation' || storeCurrentStep === 'recipe_details_validation') && totalRecipesToGenerate > 0 && processedRecipesCount > 0) {
+  } else if (storeCurrentStep === 'recipe_details_generating' && totalRecipesToGenerate > 0 && processedRecipesCount > 0) {
     dynamicSubtitle = `${processedRecipesCount}/${totalRecipesToGenerate} recettes générées`;
   }
 

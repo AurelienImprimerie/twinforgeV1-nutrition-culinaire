@@ -413,7 +413,7 @@ export const createGenerationActions = (
       set({
         loadingState: 'idle',
         currentStep: 'validation',
-        simulatedOverallProgress: 50,
+        simulatedOverallProgress: 60,
         loadingMessage: 'Plan généré avec succès !',
         lastStateUpdate: Date.now()
       });
@@ -457,12 +457,12 @@ export const createGenerationActions = (
       timestamp: new Date().toISOString()
     });
 
-    // First, mark all meals as loading to show progress
+    // CRITICAL: Transition to recipe_details_generating step
     set(state => ({
-      currentStep: 'validation',
+      currentStep: 'recipe_details_generating',
       loadingState: 'generating_recipes',
-      loadingMessage: 'Génération des recettes détaillées...',
-      simulatedOverallProgress: 50,
+      loadingMessage: 'Préparation de la génération des recettes...',
+      simulatedOverallProgress: 65,
       processedRecipesCount: 0,
       mealPlanCandidates: state.mealPlanCandidates.map(plan => ({
         ...plan,
@@ -511,8 +511,8 @@ export const createGenerationActions = (
 
       set({
         loadingState: 'streaming_recipes',
-        currentStep: 'validation',
-        simulatedOverallProgress: 55,
+        currentStep: 'recipe_details_generating',
+        simulatedOverallProgress: 70,
         totalRecipesToGenerate: totalMeals,
         lastStateUpdate: Date.now()
       });
@@ -558,7 +558,7 @@ export const createGenerationActions = (
 
                 // Update meal with detailed recipe immediately (streaming effect) + force UI update
                 processedMeals++;
-                const progress = 55 + (processedMeals / totalMeals) * 20; // 55% to 75%
+                const progress = 70 + (processedMeals / totalMeals) * 20; // 70% to 90%
 
                 set(state => ({
                   mealPlanCandidates: state.mealPlanCandidates.map(p =>
@@ -662,7 +662,9 @@ export const createGenerationActions = (
       set({
         loadingState: 'idle',
         currentStep: 'recipe_details_validation',
-        simulatedOverallProgress: 75
+        simulatedOverallProgress: 95,
+        loadingMessage: 'Toutes les recettes ont été générées avec succès !',
+        lastStateUpdate: Date.now()
       });
 
       logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'All detailed recipes generated', {
@@ -681,7 +683,7 @@ export const createGenerationActions = (
 
       set({
         loadingState: 'idle',
-        currentStep: 'generating'
+        currentStep: 'recipe_details_generating'
       });
 
       throw error;
@@ -885,6 +887,24 @@ export const createGenerationActions = (
         return true;
       }
 
+      if (summary.currentStep === 'recipe_details_generating') {
+        const data = await mealPlanProgressService.loadRecipesProgress(summary.sessionId);
+        if (!data) return false;
+
+        set({
+          currentSessionId: summary.sessionId,
+          config: data.config,
+          mealPlanCandidates: data.mealPlans,
+          currentStep: 'recipe_details_generating',
+          isActive: true,
+          loadingState: 'idle',
+          simulatedOverallProgress: 70
+        });
+
+        logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Recipe generation progress loaded successfully');
+        return true;
+      }
+
       if (summary.currentStep === 'recipe_details_validation') {
         const data = await mealPlanProgressService.loadRecipesProgress(summary.sessionId);
         if (!data) return false;
@@ -896,7 +916,7 @@ export const createGenerationActions = (
           currentStep: 'recipe_details_validation',
           isActive: true,
           loadingState: 'idle',
-          simulatedOverallProgress: 90
+          simulatedOverallProgress: 95
         });
 
         logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Recipe details progress loaded successfully');

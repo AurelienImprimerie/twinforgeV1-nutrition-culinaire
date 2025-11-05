@@ -1,7 +1,7 @@
 import { MealPlanGenerationStepData } from './types';
 
 // Configuration de la pipeline de génération de plans alimentaires
-// 4 étapes pour une expérience plus simple et fluide
+// 5 étapes pour une expérience claire et progressive
 export const MEAL_PLAN_GENERATION_STEPS: MealPlanGenerationStepData[] = [
   {
     id: 'configuration',
@@ -17,15 +17,23 @@ export const MEAL_PLAN_GENERATION_STEPS: MealPlanGenerationStepData[] = [
     subtitle: 'La Forge crée vos plans alimentaires optimisés',
     icon: 'Sparkles',
     color: '#A855F7',
-    startProgress: 25
+    startProgress: 20
   },
   {
     id: 'validation',
+    title: 'Validation du Plan',
+    subtitle: 'Revoyez et validez votre plan alimentaire',
+    icon: 'Calendar',
+    color: '#8B5CF6',
+    startProgress: 40
+  },
+  {
+    id: 'recipe_details_generating',
     title: 'Génération des Recettes',
     subtitle: 'Création des recettes détaillées pour vos repas',
     icon: 'ChefHat',
-    color: '#8B5CF6',
-    startProgress: 50
+    color: '#A855F7',
+    startProgress: 60
   },
   {
     id: 'recipe_details_validation',
@@ -33,7 +41,7 @@ export const MEAL_PLAN_GENERATION_STEPS: MealPlanGenerationStepData[] = [
     subtitle: 'Votre plan alimentaire complet est prêt',
     icon: 'Check',
     color: '#10B981',
-    startProgress: 75
+    startProgress: 80
   }
 ];
 

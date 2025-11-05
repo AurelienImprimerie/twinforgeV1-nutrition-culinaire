@@ -32,10 +32,13 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
     return null;
   }
 
-  const weekCount = mealPlan.days.length / 7;
+  const weekCount = Math.ceil(mealPlan.days.length / 7);
   const totalMeals = mealPlan.days.reduce((sum, day) => sum + (day.meals?.length || 0), 0);
   const recipesWithDetails = mealPlan.days.reduce((sum, day) =>
     sum + (day.meals?.filter(m => m.detailedRecipe).length || 0), 0
+  );
+  const recipesWithImages = mealPlan.days.reduce((sum, day) =>
+    sum + (day.meals?.filter(m => m.detailedRecipe?.imageUrl).length || 0), 0
   );
 
   const handleViewRecipe = (meal: any) => {
@@ -98,7 +101,7 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
                   <h2 className="text-2xl font-bold text-white mb-1">
                     Plan Alimentaire Complet !
                   </h2>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <p className="text-white/70">
                       {weekCount} semaine{weekCount > 1 ? 's' : ''} · {recipesWithDetails} recettes détaillées
                     </p>
@@ -106,6 +109,12 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
                       <div className="w-2 h-2 bg-green-400 rounded-full" />
                       <span className="text-green-400 text-xs font-medium">Complet</span>
                     </div>
+                    {recipesWithImages > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-400/20 border border-blue-400/30">
+                        <SpatialIcon Icon={ICONS.Image} size={12} className="text-blue-400" />
+                        <span className="text-blue-400 text-xs font-medium">{recipesWithImages} images</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -248,82 +257,144 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
                               snack: 'Collation'
                             };
 
+                            const hasImage = meal.detailedRecipe?.imageUrl;
+
                             return (
                               <div
                                 key={`meal-${mealIndex}`}
                                 onClick={() => handleViewRecipe(meal)}
-                                className="p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-all duration-200"
+                                className="rounded-lg cursor-pointer hover:bg-white/10 transition-all duration-200 overflow-hidden"
                                 style={{
                                   background: 'rgba(139, 92, 246, 0.08)',
                                   border: '1px solid rgba(139, 92, 246, 0.2)'
                                 }}
                               >
-                                <div className="flex items-start gap-3">
+                                {/* Image Container */}
+                                {hasImage && (
                                   <div
-                                    className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                    className="w-full h-32 relative overflow-hidden"
                                     style={{
-                                      background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2))',
-                                      border: '1px solid rgba(139, 92, 246, 0.4)'
+                                      background: 'linear-gradient(to bottom, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05))'
                                     }}
                                   >
-                                    <SpatialIcon
-                                      Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
-                                      size={20}
-                                      className="text-violet-300"
+                                    <img
+                                      src={meal.detailedRecipe.imageUrl}
+                                      alt={meal.name}
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                    <div
+                                      className="absolute inset-0"
+                                      style={{
+                                        background: 'linear-gradient(to top, rgba(11, 14, 23, 0.9), transparent 50%)'
+                                      }}
                                     />
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-white/50 text-xs font-medium uppercase tracking-wide">
-                                        {mealLabels[meal.type as keyof typeof mealLabels]}
-                                      </span>
-                                      {meal.detailedRecipe && (
-                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-400/20 border border-green-400/30">
-                                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                                          <span className="text-green-400 text-xs font-medium">Recette prête</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="text-white font-semibold text-base leading-tight mb-2">
-                                      {meal.name}
-                                    </p>
+                                )}
 
-                                    {meal.detailedRecipe && (
-                                      <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
-                                        {meal.detailedRecipe.prepTimeMin && (
-                                          <div className="flex items-center gap-1.5">
-                                            <SpatialIcon Icon={ICONS.Clock} size={12} className="text-violet-400" />
-                                            <span>{meal.detailedRecipe.prepTimeMin + (meal.detailedRecipe.cookTimeMin || 0)} min</span>
+                                {/* Content */}
+                                <div className="p-3">
+                                  <div className="flex items-start gap-3">
+                                    <div
+                                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                      style={{
+                                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2))',
+                                        border: '1px solid rgba(139, 92, 246, 0.4)'
+                                      }}
+                                    >
+                                      <SpatialIcon
+                                        Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
+                                        size={20}
+                                        className="text-violet-300"
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                        <span className="text-white/50 text-xs font-medium uppercase tracking-wide">
+                                          {mealLabels[meal.type as keyof typeof mealLabels]}
+                                        </span>
+                                        {meal.detailedRecipe && (
+                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-400/20 border border-green-400/30">
+                                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                                            <span className="text-green-400 text-xs font-medium">Recette prête</span>
                                           </div>
                                         )}
-                                        {meal.detailedRecipe.nutritionalInfo?.kcal && (
-                                          <div className="flex items-center gap-1.5">
-                                            <SpatialIcon Icon={ICONS.Flame} size={12} className="text-orange-400" />
-                                            <span>{meal.detailedRecipe.nutritionalInfo.kcal} kcal</span>
-                                          </div>
-                                        )}
-                                        {meal.detailedRecipe.difficulty && (
-                                          <div className="flex items-center gap-1.5">
-                                            <SpatialIcon Icon={ICONS.TrendingUp} size={12} className="text-blue-400" />
-                                            <span className="capitalize">{meal.detailedRecipe.difficulty}</span>
+                                        {hasImage && (
+                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-400/20 border border-blue-400/30">
+                                            <SpatialIcon Icon={ICONS.Image} size={10} className="text-blue-400" />
+                                            <span className="text-blue-400 text-xs font-medium">Image</span>
                                           </div>
                                         )}
                                       </div>
-                                    )}
-
-                                    {!meal.detailedRecipe && meal.ingredients && meal.ingredients.length > 0 && (
-                                      <p className="text-white/50 text-xs line-clamp-1">
-                                        {meal.ingredients.slice(0, 3).join(', ')}
+                                      <p className="text-white font-semibold text-base leading-tight mb-2">
+                                        {meal.name}
                                       </p>
+
+                                      {meal.detailedRecipe && (
+                                        <>
+                                          <div className="flex flex-wrap items-center gap-3 text-xs text-white/60 mb-2">
+                                            {meal.detailedRecipe.prepTimeMin && (
+                                              <div className="flex items-center gap-1.5">
+                                                <SpatialIcon Icon={ICONS.Clock} size={12} className="text-violet-400" />
+                                                <span>{meal.detailedRecipe.prepTimeMin + (meal.detailedRecipe.cookTimeMin || 0)} min</span>
+                                              </div>
+                                            )}
+                                            {meal.detailedRecipe.nutritionalInfo?.kcal && (
+                                              <div className="flex items-center gap-1.5">
+                                                <SpatialIcon Icon={ICONS.Flame} size={12} className="text-orange-400" />
+                                                <span>{meal.detailedRecipe.nutritionalInfo.kcal} kcal</span>
+                                              </div>
+                                            )}
+                                            {meal.detailedRecipe.difficulty && (
+                                              <div className="flex items-center gap-1.5">
+                                                <SpatialIcon Icon={ICONS.TrendingUp} size={12} className="text-blue-400" />
+                                                <span className="capitalize">{meal.detailedRecipe.difficulty}</span>
+                                              </div>
+                                            )}
+                                            {meal.detailedRecipe.servings && (
+                                              <div className="flex items-center gap-1.5">
+                                                <SpatialIcon Icon={ICONS.Users} size={12} className="text-green-400" />
+                                                <span>{meal.detailedRecipe.servings} pers.</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          {meal.detailedRecipe.dietaryTags && meal.detailedRecipe.dietaryTags.length > 0 && (
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                              {meal.detailedRecipe.dietaryTags.slice(0, 3).map((tag: string, tagIndex: number) => (
+                                                <span
+                                                  key={tagIndex}
+                                                  className="px-2 py-0.5 rounded text-xs font-medium"
+                                                  style={{
+                                                    background: 'rgba(139, 92, 246, 0.15)',
+                                                    color: 'rgba(168, 85, 247, 0.9)',
+                                                    border: '1px solid rgba(139, 92, 246, 0.3)'
+                                                  }}
+                                                >
+                                                  {tag}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+
+                                      {!meal.detailedRecipe && meal.ingredients && meal.ingredients.length > 0 && (
+                                        <p className="text-white/50 text-xs line-clamp-1">
+                                          {meal.ingredients.slice(0, 3).join(', ')}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {meal.detailedRecipe && (
+                                      <SpatialIcon
+                                        Icon={ICONS.ChevronRight}
+                                        size={18}
+                                        className="text-violet-400 flex-shrink-0 mt-1"
+                                      />
                                     )}
                                   </div>
-                                  {meal.detailedRecipe && (
-                                    <SpatialIcon
-                                      Icon={ICONS.ChevronRight}
-                                      size={18}
-                                      className="text-violet-400 flex-shrink-0 mt-1"
-                                    />
-                                  )}
                                 </div>
                               </div>
                             );
