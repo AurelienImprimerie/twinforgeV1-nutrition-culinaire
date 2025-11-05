@@ -87,6 +87,7 @@ export interface GenerationActions {
   discardMealPlans: () => void;
   updateMealPlanStatus: (planId: string, status: 'loading' | 'ready') => void;
   updateMealStatus: (planId: string, mealId: string, status: 'loading' | 'ready', recipe?: any) => void;
+  updateMealImageUrl: (recipeId: string, imageUrl: string) => void;
   loadProgressFromDatabase: () => Promise<boolean>;
   clearSavedProgress: () => Promise<void>;
 }
@@ -844,6 +845,42 @@ export const createGenerationActions = (
             }
           : p
       )
+    }));
+  },
+
+  updateMealImageUrl: (recipeId: string, imageUrl: string) => {
+    logger.info('MEAL_PLAN_GENERATION_PIPELINE', 'Updating meal image URL in state', {
+      recipeId,
+      imageUrl,
+      timestamp: new Date().toISOString()
+    });
+
+    set(state => ({
+      mealPlanCandidates: state.mealPlanCandidates.map(plan => ({
+        ...plan,
+        days: plan.days.map(day => ({
+          ...day,
+          meals: day.meals.map(meal => {
+            if (meal.detailedRecipe?.id === recipeId) {
+              logger.debug('MEAL_PLAN_GENERATION_PIPELINE', 'Found matching meal, updating image', {
+                mealName: meal.name,
+                recipeId,
+                imageUrl
+              });
+
+              return {
+                ...meal,
+                detailedRecipe: {
+                  ...meal.detailedRecipe,
+                  imageUrl
+                }
+              };
+            }
+            return meal;
+          })
+        }))
+      })),
+      lastStateUpdate: Date.now()
     }));
   },
 

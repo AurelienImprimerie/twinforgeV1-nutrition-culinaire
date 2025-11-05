@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { usePerformanceMode } from '../../../../system/context/PerformanceModeContext';
 import { useMealPlanGenerationPipeline } from '../../../../system/store/mealPlanGenerationPipeline';
+import { useRecipeImageRealtime } from '../../../../hooks/useRecipeImageRealtime';
 import GlassCard from '../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../ui/icons/registry';
-import SkeletonBase from '../../../../ui/components/skeletons/SkeletonBase';
+import MealPlanRecipeCard from '../components/MealPlanRecipeCard';
 
 interface RecipeDetailsGeneratingStageProps {
   onExit: () => void;
@@ -34,6 +35,24 @@ const RecipeDetailsGeneratingStage: React.FC<RecipeDetailsGeneratingStageProps> 
 
   const progressPercentage = totalMeals > 0 ? Math.round((generatedMeals / totalMeals) * 100) : 0;
   const isStreaming = loadingState === 'streaming_recipes' && generatedMeals > 0;
+
+  // Collect all recipe IDs for realtime listening
+  const recipeIds = useMemo(() => {
+    const ids: string[] = [];
+    mealPlanCandidates.forEach(plan => {
+      plan.days.forEach(day => {
+        day.meals?.forEach(meal => {
+          if (meal.detailedRecipe?.id) {
+            ids.push(meal.detailedRecipe.id);
+          }
+        });
+      });
+    });
+    return ids;
+  }, [mealPlanCandidates]);
+
+  // Listen for real-time image updates
+  useRecipeImageRealtime(isStreaming, recipeIds);
 
   return (
     <div className="space-y-6">
@@ -222,7 +241,7 @@ const RecipeDetailsGeneratingStage: React.FC<RecipeDetailsGeneratingStageProps> 
         </GlassCard>
       </MotionDiv>
 
-      {/* Recipes Streaming Display */}
+      {/* Recipes Streaming Display - Rich Card Grid */}
       {isStreaming && currentPlan && (
         <MotionDiv
           {...(!isPerformanceMode && {
@@ -239,90 +258,73 @@ const RecipeDetailsGeneratingStage: React.FC<RecipeDetailsGeneratingStageProps> 
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)'
             }}
           >
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 mb-5">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  className="w-14 h-14 rounded-full flex items-center justify-center"
                   style={{
                     background: 'linear-gradient(135deg, #A855F7, #7C3AED)',
-                    boxShadow: '0 0 16px rgba(168, 85, 247, 0.4)'
+                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)'
                   }}
                 >
                   <SpatialIcon
                     Icon={ICONS.ChefHat}
-                    size={24}
+                    size={28}
                     className="text-white"
                   />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-xl">Recettes Générées</h3>
-                  <p className="text-white/60 text-sm">
-                    {generatedMeals}/{totalMeals} recettes complètes
+                  <h3 className="text-white font-bold text-2xl mb-1">Recettes Générées</h3>
+                  <p className="text-white/70 text-sm">
+                    {generatedMeals}/{totalMeals} recettes complètes avec détails nutritionnels
                   </p>
                 </div>
               </div>
 
-              {/* Recipes List */}
-              <div className="space-y-2">
+              {/* Recipes Grid by Day */}
+              <div className="space-y-8">
                 {currentPlan.days.map((day, dayIndex) => (
                   <div key={`day-${dayIndex}`}>
-                    {day.meals?.map((meal, mealIndex) => {
-                      const isGenerated = meal.recipeGenerated && meal.status === 'ready';
-
-                      return (
-                        <MotionDiv
-                          key={`meal-${dayIndex}-${mealIndex}`}
-                          {...(!isPerformanceMode && isGenerated && {
-                            initial: { opacity: 0, x: -20 },
-                            animate: { opacity: 1, x: 0 },
-                            transition: { duration: 0.3 }
+                    {/* Day Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(139, 92, 246, 0.2))',
+                          border: '1.5px solid rgba(168, 85, 247, 0.4)'
+                        }}
+                      >
+                        <SpatialIcon Icon={ICONS.Calendar} size={20} className="text-violet-300" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-bold text-lg">
+                          {new Date(day.date).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
                           })}
-                          className="flex items-center gap-3 p-3 rounded-lg mb-2"
-                          style={{
-                            background: isGenerated
-                              ? 'rgba(168, 85, 247, 0.1)'
-                              : 'rgba(168, 85, 247, 0.05)',
-                            border: `1px solid ${isGenerated
-                              ? 'rgba(168, 85, 247, 0.3)'
-                              : 'rgba(168, 85, 247, 0.1)'}`
-                          }}
-                        >
-                          {isGenerated ? (
-                            <>
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                                style={{
-                                  background: 'linear-gradient(135deg, #A855F7, #7C3AED)',
-                                  boxShadow: '0 0 12px rgba(168, 85, 247, 0.4)'
-                                }}
-                              >
-                                <SpatialIcon
-                                  Icon={ICONS.Check}
-                                  size={16}
-                                  className="text-white"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-white font-medium text-sm">
-                                  {meal.detailedRecipe?.title || meal.name}
-                                </p>
-                                <p className="text-white/60 text-xs">
-                                  Jour {dayIndex + 1} - {meal.type}
-                                </p>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <SkeletonBase width="32px" height="32px" borderRadius="50%" />
-                              <div className="flex-1">
-                                <SkeletonBase width="60%" height="14px" className="mb-1" />
-                                <SkeletonBase width="40%" height="12px" />
-                              </div>
-                            </>
-                          )}
-                        </MotionDiv>
-                      );
-                    })}
+                        </h4>
+                        <p className="text-white/60 text-xs">
+                          Jour {dayIndex + 1} - {day.meals?.filter(m => m.recipeGenerated).length || 0}/{day.meals?.length || 0} repas prêts
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Meals Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {day.meals?.map((meal, mealIndex) => {
+                        const isGenerated = meal.recipeGenerated && meal.status === 'ready';
+
+                        return (
+                          <MealPlanRecipeCard
+                            key={`meal-${dayIndex}-${mealIndex}`}
+                            meal={meal}
+                            dayIndex={dayIndex}
+                            isGenerated={isGenerated}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>

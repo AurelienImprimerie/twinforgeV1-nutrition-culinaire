@@ -101,6 +101,7 @@ export interface MealPlanGenerationPipelineState {
   setLoadingState: (state: 'idle' | 'generating' | 'streaming' | 'generating_recipes' | 'streaming_recipes' | 'saving') => void;
   updateMealPlanStatus: (planId: string, status: 'loading' | 'ready') => void;
   updateMealStatus: (planId: string, mealId: string, status: 'loading' | 'ready', recipe?: Recipe) => void;
+  updateMealImageUrl: (recipeId: string, imageUrl: string) => void;
 
   // Progress persistence actions
   loadProgressFromDatabase: () => Promise<boolean>;

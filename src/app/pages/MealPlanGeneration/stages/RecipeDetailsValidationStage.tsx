@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { usePerformanceMode } from '../../../../system/context/PerformanceModeContext';
+import { useRecipeImageRealtime } from '../../../../hooks/useRecipeImageRealtime';
 import GlassCard from '../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../ui/icons/registry';
 import RecipeDetailModal from '../../../pages/Fridge/tabs/RecipesTab/components/RecipeDetailModal';
+import MealPlanRecipeCard from '../components/MealPlanRecipeCard';
 import type { Recipe } from '../../../../domain/recipe';
 import type { MealPlan } from '../../../../system/store/mealPlanGenerationPipeline/types';
 
@@ -52,6 +54,23 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
     setShowRecipeDetailModal(false);
     setSelectedRecipe(null);
   };
+
+  // Collect all recipe IDs for realtime listening
+  const recipeIds = useMemo(() => {
+    if (!mealPlan) return [];
+    const ids: string[] = [];
+    mealPlan.days.forEach(day => {
+      day.meals?.forEach(meal => {
+        if (meal.detailedRecipe?.id) {
+          ids.push(meal.detailedRecipe.id);
+        }
+      });
+    });
+    return ids;
+  }, [mealPlan]);
+
+  // Listen for real-time image updates (in case some are still generating)
+  useRecipeImageRealtime(true, recipeIds);
 
   return (
     <>
@@ -222,183 +241,45 @@ const RecipeDetailsValidationStage: React.FC<RecipeDetailsValidationStageProps> 
                   </div>
 
                   {/* Days Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  <div className="space-y-6">
                     {weekDays.map((day, dayIndex) => (
-                      <div
-                        key={`day-${dayIndex}`}
-                        className="p-4 rounded-lg"
-                        style={{
-                          background: 'rgba(139, 92, 246, 0.05)',
-                          border: '1px solid rgba(139, 92, 246, 0.2)'
-                        }}
-                      >
-                        <div className="font-semibold text-white mb-3 text-sm">
-                          {new Date(day.date).toLocaleDateString('fr-FR', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'short'
-                          })}
+                      <div key={`day-${dayIndex}`}>
+                        {/* Day Header */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{
+                              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2))',
+                              border: '1.5px solid rgba(139, 92, 246, 0.4)'
+                            }}
+                          >
+                            <SpatialIcon Icon={ICONS.Calendar} size={20} className="text-violet-300" />
+                          </div>
+                          <div>
+                            <h5 className="text-white font-bold text-base">
+                              {new Date(day.date).toLocaleDateString('fr-FR', {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long'
+                              })}
+                            </h5>
+                            <p className="text-white/60 text-xs">
+                              {day.meals?.length || 0} repas avec recettes complètes
+                            </p>
+                          </div>
                         </div>
 
-                        {/* Meals List with Enhanced Details */}
-                        <div className="space-y-3">
-                          {day.meals?.map((meal, mealIndex) => {
-                            const mealIcons = {
-                              breakfast: ICONS.Coffee,
-                              lunch: ICONS.UtensilsCrossed,
-                              dinner: ICONS.UtensilsCrossed,
-                              snack: ICONS.Cookie
-                            };
-
-                            const mealLabels = {
-                              breakfast: 'Petit-déjeuner',
-                              lunch: 'Déjeuner',
-                              dinner: 'Dîner',
-                              snack: 'Collation'
-                            };
-
-                            const hasImage = meal.detailedRecipe?.imageUrl;
-
-                            return (
-                              <div
-                                key={`meal-${mealIndex}`}
-                                onClick={() => handleViewRecipe(meal)}
-                                className="rounded-lg cursor-pointer hover:bg-white/10 transition-all duration-200 overflow-hidden"
-                                style={{
-                                  background: 'rgba(139, 92, 246, 0.08)',
-                                  border: '1px solid rgba(139, 92, 246, 0.2)'
-                                }}
-                              >
-                                {/* Image Container */}
-                                {hasImage && (
-                                  <div
-                                    className="w-full h-32 relative overflow-hidden"
-                                    style={{
-                                      background: 'linear-gradient(to bottom, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05))'
-                                    }}
-                                  >
-                                    <img
-                                      src={meal.detailedRecipe.imageUrl}
-                                      alt={meal.name}
-                                      className="w-full h-full object-cover"
-                                      loading="lazy"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                      }}
-                                    />
-                                    <div
-                                      className="absolute inset-0"
-                                      style={{
-                                        background: 'linear-gradient(to top, rgba(11, 14, 23, 0.9), transparent 50%)'
-                                      }}
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Content */}
-                                <div className="p-3">
-                                  <div className="flex items-start gap-3">
-                                    <div
-                                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                      style={{
-                                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2))',
-                                        border: '1px solid rgba(139, 92, 246, 0.4)'
-                                      }}
-                                    >
-                                      <SpatialIcon
-                                        Icon={mealIcons[meal.type as keyof typeof mealIcons] || ICONS.UtensilsCrossed}
-                                        size={20}
-                                        className="text-violet-300"
-                                      />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                        <span className="text-white/50 text-xs font-medium uppercase tracking-wide">
-                                          {mealLabels[meal.type as keyof typeof mealLabels]}
-                                        </span>
-                                        {meal.detailedRecipe && (
-                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-400/20 border border-green-400/30">
-                                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                                            <span className="text-green-400 text-xs font-medium">Recette prête</span>
-                                          </div>
-                                        )}
-                                        {hasImage && (
-                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-400/20 border border-blue-400/30">
-                                            <SpatialIcon Icon={ICONS.Image} size={10} className="text-blue-400" />
-                                            <span className="text-blue-400 text-xs font-medium">Image</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <p className="text-white font-semibold text-base leading-tight mb-2">
-                                        {meal.name}
-                                      </p>
-
-                                      {meal.detailedRecipe && (
-                                        <>
-                                          <div className="flex flex-wrap items-center gap-3 text-xs text-white/60 mb-2">
-                                            {meal.detailedRecipe.prepTimeMin && (
-                                              <div className="flex items-center gap-1.5">
-                                                <SpatialIcon Icon={ICONS.Clock} size={12} className="text-violet-400" />
-                                                <span>{meal.detailedRecipe.prepTimeMin + (meal.detailedRecipe.cookTimeMin || 0)} min</span>
-                                              </div>
-                                            )}
-                                            {meal.detailedRecipe.nutritionalInfo?.kcal && (
-                                              <div className="flex items-center gap-1.5">
-                                                <SpatialIcon Icon={ICONS.Flame} size={12} className="text-orange-400" />
-                                                <span>{meal.detailedRecipe.nutritionalInfo.kcal} kcal</span>
-                                              </div>
-                                            )}
-                                            {meal.detailedRecipe.difficulty && (
-                                              <div className="flex items-center gap-1.5">
-                                                <SpatialIcon Icon={ICONS.TrendingUp} size={12} className="text-blue-400" />
-                                                <span className="capitalize">{meal.detailedRecipe.difficulty}</span>
-                                              </div>
-                                            )}
-                                            {meal.detailedRecipe.servings && (
-                                              <div className="flex items-center gap-1.5">
-                                                <SpatialIcon Icon={ICONS.Users} size={12} className="text-green-400" />
-                                                <span>{meal.detailedRecipe.servings} pers.</span>
-                                              </div>
-                                            )}
-                                          </div>
-                                          {meal.detailedRecipe.dietaryTags && meal.detailedRecipe.dietaryTags.length > 0 && (
-                                            <div className="flex flex-wrap items-center gap-1.5">
-                                              {meal.detailedRecipe.dietaryTags.slice(0, 3).map((tag: string, tagIndex: number) => (
-                                                <span
-                                                  key={tagIndex}
-                                                  className="px-2 py-0.5 rounded text-xs font-medium"
-                                                  style={{
-                                                    background: 'rgba(139, 92, 246, 0.15)',
-                                                    color: 'rgba(168, 85, 247, 0.9)',
-                                                    border: '1px solid rgba(139, 92, 246, 0.3)'
-                                                  }}
-                                                >
-                                                  {tag}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </>
-                                      )}
-
-                                      {!meal.detailedRecipe && meal.ingredients && meal.ingredients.length > 0 && (
-                                        <p className="text-white/50 text-xs line-clamp-1">
-                                          {meal.ingredients.slice(0, 3).join(', ')}
-                                        </p>
-                                      )}
-                                    </div>
-                                    {meal.detailedRecipe && (
-                                      <SpatialIcon
-                                        Icon={ICONS.ChevronRight}
-                                        size={18}
-                                        className="text-violet-400 flex-shrink-0 mt-1"
-                                      />
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                        {/* Meals Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {day.meals?.map((meal, mealIndex) => (
+                            <MealPlanRecipeCard
+                              key={`meal-${mealIndex}`}
+                              meal={meal}
+                              dayIndex={weekIndex * 7 + dayIndex}
+                              isGenerated={meal.recipeGenerated && meal.status === 'ready'}
+                              onClick={meal.detailedRecipe ? () => handleViewRecipe(meal) : undefined}
+                            />
+                          ))}
                         </div>
                       </div>
                     ))}
