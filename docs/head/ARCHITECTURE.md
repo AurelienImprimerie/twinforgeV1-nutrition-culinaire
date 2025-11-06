@@ -158,10 +158,40 @@ type ForgeType = 'training' | 'nutrition' | 'fasting' | 'body-scan' | 'equipment
 - Équipement disponible par lieu
 - Lieu par défaut
 
-**Autres collecteurs** (structure prête pour implémentation future):
-- NutritionDataCollector
-- FastingDataCollector
-- BodyScanDataCollector
+**NutritionDataCollector** (`/src/system/head/knowledge/collectors/NutritionDataCollector.ts`):
+- Repas récents et scans
+- Macros et calories journalières
+- Patterns alimentaires
+- Objectifs nutritionnels
+
+**FastingDataCollector** (`/src/system/head/knowledge/collectors/FastingDataCollector.ts`):
+- Sessions de jeûne actives et historique
+- Protocoles de jeûne préférés
+- Progression et metrics
+
+**BodyScanDataCollector** (`/src/system/head/knowledge/collectors/BodyScanDataCollector.ts`):
+- Scans corporels 3D récents
+- Évolution morphologique
+- Composition corporelle
+
+**BreastfeedingDataCollector** (`/src/system/head/knowledge/collectors/BreastfeedingDataCollector.ts`):
+- Statut d'allaitement actuel
+- Type d'allaitement (exclusif/mixte/partiel)
+- Âge du bébé et durée
+- Besoins nutritionnels augmentés (calories, protéines, calcium, fer, oméga-3, eau)
+- Recommandations alimentaires personnalisées
+- Aliments prioritaires, limités et à éviter
+
+**MenopauseDataCollector** (`/src/system/head/knowledge/collectors/MenopauseDataCollector.ts`):
+- Statut reproductif (menstruant/périménopause/ménopause/post-ménopause)
+- Phase de périménopause (précoce/tardive)
+- Jours depuis dernières règles
+- Progression vers confirmation de ménopause
+- Niveaux hormonaux (FSH, œstrogène)
+- Symptômes récents et intensité moyenne
+- Recommandations adaptées (nutrition, exercice, jeûne, lifestyle)
+- Suggestions de transition de phase
+- Description de phase formatée pour l'IA
 
 ### 3. Session Awareness
 
@@ -394,9 +424,13 @@ interface UserKnowledge {
   profile: ProfileKnowledge;     // Identité, objectifs
   training: TrainingKnowledge;   // Entraînements, progression
   equipment: EquipmentKnowledge; // Lieux, matériel
-  nutrition: NutritionKnowledge; // Repas (structure prête)
-  fasting: FastingKnowledge;     // Jeûne (structure prête)
-  bodyScan: BodyScanKnowledge;   // Scans 3D (structure prête)
+  nutrition: NutritionKnowledge; // Repas, scans nutritionnels
+  fasting: FastingKnowledge;     // Sessions de jeûne
+  bodyScan: BodyScanKnowledge;   // Scans 3D corporels
+  energy: EnergyKnowledge;       // Niveau d'énergie, fatigue
+  temporal: TemporalKnowledge;   // Contexte temporel (jour, heure)
+  breastfeeding?: BreastfeedingKnowledge;  // Allaitement et besoins nutritionnels
+  menopause?: MenopauseKnowledge;          // Ménopause et adaptations
   lastUpdated: Record<ForgeType, number>;
   completeness: Record<ForgeType, number>; // 0-100%
 }
@@ -415,6 +449,68 @@ interface TrainingKnowledge {
   lastSessionDate: string | null;
   personalRecords: PersonalRecord[];
   activeGoals: TrainingGoal[];
+  hasData: boolean;
+}
+```
+
+### BreastfeedingKnowledge
+
+```typescript
+interface BreastfeedingKnowledge {
+  hasData: boolean;
+  isBreastfeeding: boolean;
+  breastfeedingType: 'exclusive' | 'mixed' | 'partial' | null;
+  babyAgeMonths: number | null;
+  startDate: string | null;
+  durationMonths: number | null;
+  nutritionalNeeds: {
+    extraCalories: number;      // Surplus calorique requis (300-500 kcal)
+    extraProtein: number;       // Surplus protéique (20-25g)
+    calciumNeed: number;        // Besoin en calcium (1000-1300mg)
+    ironNeed: number;           // Besoin en fer (18-27mg)
+    omega3Need: number;         // Besoin en oméga-3 (250-375mg DHA)
+    waterIntake: number;        // Hydratation (2.0-3.0L)
+  };
+  recommendations: {
+    priorityFoods: string[];    // Aliments prioritaires
+    limitedFoods: string[];     // Aliments à limiter
+    avoidFoods: string[];       // Aliments à éviter
+    mealFrequency: string;      // Fréquence des repas
+  };
+  notes: string | null;
+}
+```
+
+### MenopauseKnowledge
+
+```typescript
+interface MenopauseKnowledge {
+  hasActiveTracking: boolean;
+  status: 'menstruating' | 'perimenopause' | 'menopause' | 'postmenopause' | null;
+  stage: 'early-perimenopause' | 'late-perimenopause' | null;
+  daysSinceLastPeriod: number | null;
+  daysUntilMenopauseConfirmation: number | null;  // 365 jours sans règles = confirmation
+  isInTransition: boolean;
+  phaseDescription: string | null;
+  energyLevel: 'low' | 'moderate' | 'high' | null;
+  metabolicRate: 'reduced' | 'normal' | null;
+  fshLevel: number | null;        // Niveau FSH (follicle-stimulating hormone)
+  estrogenLevel: number | null;   // Niveau œstrogène
+  recentSymptoms: MenopauseSymptomLog[];  // 30 derniers jours
+  averageSymptomIntensity: number;  // 0-10
+  recommendations: {
+    nutrition: string[];    // Adaptations nutritionnelles
+    exercise: string[];     // Adaptations exercice
+    fasting: string[];      // Adaptations jeûne
+    lifestyle: string[];    // Adaptations lifestyle
+  } | null;
+  transitionSuggestion: {
+    shouldSuggest: boolean;
+    suggestedStatus: 'perimenopause' | 'menopause' | 'postmenopause' | null;
+    reason: string;
+  } | null;
+  formattedForAI: string | null;  // Description formatée pour l'IA
+  lastUpdate: string | null;
   hasData: boolean;
 }
 ```
@@ -623,6 +719,111 @@ CREATE TABLE training_feedbacks (
 CREATE INDEX idx_feedbacks_user_session ON training_feedbacks(user_id, session_id);
 CREATE INDEX idx_feedbacks_key_moments ON training_feedbacks(user_id, is_key_moment) WHERE is_key_moment = true;
 ```
+
+### breastfeeding_tracking
+
+Suivi de l'allaitement pour adaptations nutritionnelles personnalisées.
+
+```sql
+CREATE TABLE breastfeeding_tracking (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  is_breastfeeding boolean DEFAULT false,
+  breastfeeding_type text CHECK (breastfeeding_type IN ('exclusive', 'mixed', 'partial')),
+  baby_age_months integer CHECK (baby_age_months >= 0 AND baby_age_months <= 36),
+  start_date date,
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_breastfeeding_user ON breastfeeding_tracking(user_id);
+```
+
+**RLS**:
+- Les utilisateurs ne peuvent accéder qu'à leurs propres données d'allaitement
+
+### menopause_tracking
+
+Suivi de la ménopause et périménopause pour adaptations personnalisées.
+
+```sql
+CREATE TABLE menopause_tracking (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  reproductive_status text CHECK (reproductive_status IN ('menstruating', 'perimenopause', 'menopause', 'postmenopause')),
+  perimenopause_stage text CHECK (perimenopause_stage IN ('early-perimenopause', 'late-perimenopause')),
+  last_period_date date,
+  menopause_confirmation_date date,
+  fsh_level numeric,
+  estrogen_level numeric,
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_menopause_user ON menopause_tracking(user_id);
+CREATE INDEX idx_menopause_status ON menopause_tracking(reproductive_status);
+```
+
+**RLS**:
+- Les utilisateurs ne peuvent accéder qu'à leurs propres données de ménopause
+
+### menopause_symptoms_log
+
+Journal des symptômes de ménopause pour suivi et adaptations.
+
+```sql
+CREATE TABLE menopause_symptoms_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  symptom_date date NOT NULL,
+  hot_flashes_count integer DEFAULT 0,
+  hot_flashes_intensity integer CHECK (hot_flashes_intensity >= 0 AND hot_flashes_intensity <= 10),
+  night_sweats_intensity integer CHECK (night_sweats_intensity >= 0 AND night_sweats_intensity <= 10),
+  mood_changes_intensity integer CHECK (mood_changes_intensity >= 0 AND mood_changes_intensity <= 10),
+  sleep_quality integer CHECK (sleep_quality >= 1 AND sleep_quality <= 10),
+  energy_level integer CHECK (energy_level >= 1 AND energy_level <= 10),
+  vaginal_dryness_intensity integer CHECK (vaginal_dryness_intensity >= 0 AND vaginal_dryness_intensity <= 10),
+  brain_fog_intensity integer CHECK (brain_fog_intensity >= 0 AND brain_fog_intensity <= 10),
+  joint_pain_intensity integer CHECK (joint_pain_intensity >= 0 AND joint_pain_intensity <= 10),
+  weight_kg numeric,
+  notes text,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_symptoms_user_date ON menopause_symptoms_log(user_id, symptom_date DESC);
+```
+
+**RLS**:
+- Les utilisateurs ne peuvent accéder qu'à leurs propres journaux de symptômes
+
+### menstrual_cycle_tracking
+
+Suivi du cycle menstruel pour adaptations nutritionnelles et d'entraînement.
+
+```sql
+CREATE TABLE menstrual_cycle_tracking (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  period_start_date date NOT NULL,
+  period_end_date date,
+  cycle_length_days integer,
+  flow_intensity text CHECK (flow_intensity IN ('light', 'moderate', 'heavy', 'spotting')),
+  symptoms jsonb DEFAULT '[]'::jsonb,
+  mood_rating integer CHECK (mood_rating >= 1 AND mood_rating <= 10),
+  energy_level integer CHECK (energy_level >= 1 AND energy_level <= 10),
+  pain_level integer CHECK (pain_level >= 0 AND pain_level <= 10),
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_menstrual_user_date ON menstrual_cycle_tracking(user_id, period_start_date DESC);
+```
+
+**RLS**:
+- Les utilisateurs ne peuvent accéder qu'à leurs propres données de cycle menstruel
 
 ---
 

@@ -59,9 +59,13 @@ Le système HEAD collecte les données de plusieurs "forges" (domaines fonctionn
 
 - ✅ **Training**: Sessions, charges, progression, records
 - ✅ **Equipment**: Lieux d'entraînement, matériel disponible
-- 🔄 **Nutrition**: Repas, scans (structure prête)
-- 🔄 **Fasting**: Sessions de jeûne (structure prête)
-- 🔄 **Body-scan**: Scans corporels 3D (structure prête)
+- ✅ **Nutrition**: Repas, scans, macros, calories journalières
+- ✅ **Fasting**: Sessions de jeûne, protocoles, progression
+- ✅ **Body-scan**: Scans corporels 3D, morphologie, composition
+- ✅ **Energy**: Niveau d'énergie, fatigue, récupération
+- ✅ **Temporal**: Contexte temporel (jour, heure, saison)
+- ✅ **Breastfeeding**: Allaitement, besoins nutritionnels augmentés
+- ✅ **Menopause**: Ménopause, symptômes, adaptations personnalisées
 
 ## 🚀 Quick Start
 
@@ -151,6 +155,30 @@ Le système réagit automatiquement aux événements:
 - Invalidation sélective sur changement de données
 - Métriques de performance en temps réel
 - Health checks automatiques
+
+### 6. Personnalisation Santé Reproductive
+
+Le système HEAD prend en compte la santé reproductive féminine pour des adaptations ultra-personnalisées:
+
+**Allaitement** (BreastfeedingDataCollector):
+- Détection automatique du type d'allaitement (exclusif/mixte/partiel)
+- Calcul des besoins nutritionnels augmentés (calories, protéines, calcium, fer, oméga-3, eau)
+- Recommandations alimentaires adaptées (aliments prioritaires, limités, à éviter)
+- Ajustement des cibles nutritionnelles selon l'âge du bébé
+
+**Ménopause** (MenopauseDataCollector):
+- Suivi du statut reproductif (menstruant/périménopause/ménopause/post-ménopause)
+- Calcul automatique de la progression (jours depuis dernières règles)
+- Analyse des symptômes récents et intensité moyenne
+- Recommandations adaptées pour nutrition, exercice, jeûne, lifestyle
+- Suggestions proactives de transition de phase
+- Adaptation du taux métabolique et niveau d'énergie
+
+**Cycle Menstruel** (menstrual_cycle_tracking):
+- Suivi des cycles et patterns
+- Analyse de l'intensité du flux et symptômes
+- Corrélation avec humeur, énergie et douleur
+- Adaptations d'entraînement selon la phase du cycle
 
 ## 🔗 Intégrations
 

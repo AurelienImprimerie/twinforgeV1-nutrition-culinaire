@@ -772,6 +772,85 @@ const prompt = await realtimeIntegration.buildRealtimeSystemPrompt(
 // Il peut dire: "Pour répondre à ta question sur la respiration..."
 ```
 
+### Cas 4: Adaptation nutritionnelle pour allaitement
+
+```typescript
+// 1. L'utilisateur scanne un repas dans l'app nutrition
+const context = await brainCore.getContext();
+
+// 2. Le système détecte automatiquement l'allaitement
+if (context.user.breastfeeding?.isBreastfeeding) {
+  const needs = context.user.breastfeeding.nutritionalNeeds;
+
+  console.log('Besoins augmentés:', {
+    extraCalories: needs.extraCalories,  // +500 kcal
+    extraProtein: needs.extraProtein,    // +25g
+    waterIntake: needs.waterIntake       // 3.0L
+  });
+
+  console.log('Aliments prioritaires:',
+    context.user.breastfeeding.recommendations.priorityFoods
+  );
+  // ['Poissons gras', 'Légumineuses', 'Produits laitiers', ...]
+
+  console.log('Aliments à éviter:',
+    context.user.breastfeeding.recommendations.avoidFoods
+  );
+  // ['Alcool', 'Excès de caféine', 'Poissons à mercure élevé']
+}
+
+// 3. L'IA nutritionnelle adapte ses recommandations automatiquement
+const aiPrompt = await chatIntegration.enrichChatRequest({
+  messages: [{ role: 'user', content: 'Ce repas couvre mes besoins?' }],
+  mode: 'nutrition'
+});
+// Le prompt inclut automatiquement:
+// "L'utilisatrice allaite (exclusif), bébé de 4 mois"
+// "Besoins augmentés: +500 kcal, +25g protéines, 3.0L eau"
+// "Aliments prioritaires: [liste]"
+// "Aliments à éviter: [liste]"
+```
+
+### Cas 5: Adaptation entraînement selon phase de ménopause
+
+```typescript
+// 1. L'utilisatrice démarre une session d'entraînement
+const context = await brainCore.getContext();
+
+// 2. Le système détecte la phase de ménopause
+if (context.user.menopause?.hasActiveTracking) {
+  const menopause = context.user.menopause;
+
+  console.log('Phase:', menopause.status);           // 'perimenopause'
+  console.log('Stade:', menopause.stage);            // 'late-perimenopause'
+  console.log('Niveau énergie:', menopause.energyLevel);  // 'moderate'
+  console.log('Taux métabolique:', menopause.metabolicRate);  // 'reduced'
+  console.log('Symptômes moyens:', menopause.averageSymptomIntensity);  // 6/10
+
+  // Recommandations adaptées
+  console.log('Exercice:', menopause.recommendations?.exercise);
+  // ['Privilégier musculation lourde', 'Limiter cardio intense',
+  //  'Augmenter repos entre séries', 'Focus force et masse osseuse']
+}
+
+// 3. Le coach vocal adapte automatiquement ses conseils
+const voicePrompt = await realtimeIntegration.buildRealtimeSystemPrompt(
+  basePrompt,
+  'training'
+);
+// Le prompt inclut automatiquement:
+// "Utilisatrice en périménopause tardive"
+// "Taux métabolique réduit, niveau énergie modéré"
+// "Symptômes moyens 6/10 (bouffées de chaleur, fatigue)"
+// "ADAPTATIONS: Focus masse musculaire et osseuse, récupération prolongée"
+
+// 4. Suggestions proactives de transition
+if (menopause.transitionSuggestion?.shouldSuggest) {
+  console.log('Suggestion:', menopause.transitionSuggestion.reason);
+  // "90 jours sans règles, considérer transition vers ménopause confirmée"
+}
+```
+
 ---
 
 ## Troubleshooting
