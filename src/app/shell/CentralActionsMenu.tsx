@@ -403,36 +403,57 @@ const CentralActionsMenu: React.FC<CentralActionsMenuProps> = ({ isOpen }) => {
               </div>
             )}
 
-            {/* ========== CATÉGORIE: ACTIVITÉ ========== */}
-            {activiteSection.actions.length > 0 && (
+            {/* ========== CATÉGORIE: ACTIVITÉ & SANTÉ (2x2 en prise de masse) ========== */}
+            {hideFastingForBulking && activiteSection.actions.length > 0 && filteredSanteSection.actions.length > 0 ? (
               <div className="mb-3">
                 <div className="px-1.5 mb-1.5">
                   <h3 className="text-white/70 text-[11px] uppercase tracking-wider font-bold">
-                    Activité
+                    Activité & Santé
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {activiteSection.actions.map((a, i) => (
                     <SecondaryPill key={a.id} action={a} index={i} />
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* ========== CATÉGORIE: SANTÉ ========== */}
-            {filteredSanteSection.actions.length > 0 && (
-              <div className="mb-3">
-                <div className="px-1.5 mb-1.5">
-                  <h3 className="text-white/70 text-[11px] uppercase tracking-wider font-bold">
-                    Santé
-                  </h3>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
                   {filteredSanteSection.actions.map((a, i) => (
                     <SecondaryPill key={a.id} action={a} index={i} />
                   ))}
                 </div>
               </div>
+            ) : (
+              <>
+                {/* ========== CATÉGORIE: ACTIVITÉ ========== */}
+                {activiteSection.actions.length > 0 && (
+                  <div className="mb-3">
+                    <div className="px-1.5 mb-1.5">
+                      <h3 className="text-white/70 text-[11px] uppercase tracking-wider font-bold">
+                        Activité
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {activiteSection.actions.map((a, i) => (
+                        <SecondaryPill key={a.id} action={a} index={i} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ========== CATÉGORIE: SANTÉ ========== */}
+                {filteredSanteSection.actions.length > 0 && (
+                  <div className="mb-3">
+                    <div className="px-1.5 mb-1.5">
+                      <h3 className="text-white/70 text-[11px] uppercase tracking-wider font-bold">
+                        Santé
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {filteredSanteSection.actions.map((a, i) => (
+                        <SecondaryPill key={a.id} action={a} index={i} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* ========== BOUTONS PRINCIPAUX: AVATAR ET TRAINING EN 2x2 ========== */}
