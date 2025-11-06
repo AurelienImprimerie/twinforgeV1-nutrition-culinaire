@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SpatialIcon from '../../ui/icons/SpatialIcon';
 import { ICONS } from '../../ui/icons/registry';
-import { useFeedback } from '../../hooks/useFeedback';
+import { useFeedback, useHideFastingForBulking } from '../../hooks';
 import { bottomBarClick, centralButtonClick } from '../../audio/effects/forgeronSounds';
 import { useOverlayStore } from '../../system/store/overlayStore';
 import { Haptics } from '../../utils/haptics';
@@ -12,8 +12,9 @@ import { usePerformanceMode } from '../../system/context/PerformanceModeContext'
 
 /**
  * Configuration des boutons de la nouvelle barre inférieure
- * 8 boutons : Repas - Frigo - Activité - Training - Jeûne - Vital - Profil - Paramètres
- * Le bouton éclair (Outils du Forgeron) est maintenant dans le header
+ * 5 boutons : Repas - Frigo - Activité - Training - Jeûne
+ * Le bouton éclair (Outils du Forgeron) est dans le header
+ * Les boutons Vital, Profil et Paramètres sont dans la sidebar/header
  */
 const BOTTOM_BAR_BUTTONS = [
   {
@@ -50,27 +51,6 @@ const BOTTOM_BAR_BUTTONS = [
     icon: 'Timer' as const,
     route: '/fasting',
     color: '#F59E0B', // Orange jeûne
-  },
-  {
-    id: 'vital',
-    label: 'Vital',
-    icon: 'HeartPulse' as const,
-    route: '/vital',
-    color: '#EF4444', // Rouge santé
-  },
-  {
-    id: 'profile',
-    label: 'Profil',
-    icon: 'User' as const,
-    route: '/profile',
-    color: '#FDC830', // Jaune profil
-  },
-  {
-    id: 'settings',
-    label: 'Réglages',
-    icon: 'Settings' as const,
-    route: '/settings',
-    color: '#94A3B8', // Gris paramètres
   },
 ];
 
@@ -126,7 +106,7 @@ function BarButton({
 
 /**
  * New Mobile Bottom Bar - Barre de navigation inférieure redesignée
- * 8 boutons : Repas - Frigo - Activité - Training - Jeûne - Vital - Profil - Paramètres
+ * 5 boutons : Repas - Frigo - Activité - Training - Jeûne (masqué si prise de masse)
  * Le bouton éclair (Outils du Forgeron) a été déplacé dans le header
  */
 const NewMobileBottomBar: React.FC = () => {
@@ -134,6 +114,17 @@ const NewMobileBottomBar: React.FC = () => {
   const navigate = useNavigate();
   const { close } = useOverlayStore();
   const { isPerformanceMode } = usePerformanceMode();
+  const hideFastingForBulking = useHideFastingForBulking();
+
+  // Filtrer les boutons : masquer le jeûne si l'utilisateur est en prise de masse
+  const visibleButtons = React.useMemo(() => {
+    return BOTTOM_BAR_BUTTONS.filter((button) => {
+      if (button.id === 'fasting' && hideFastingForBulking) {
+        return false;
+      }
+      return true;
+    });
+  }, [hideFastingForBulking]);
 
   const handleButtonClick = (button: typeof BOTTOM_BAR_BUTTONS[0]) => {
     if (button.route) {
@@ -175,7 +166,7 @@ const NewMobileBottomBar: React.FC = () => {
       >
         <div className="new-mobile-bottom-bar-container">
           <div className="new-mobile-bottom-bar-buttons">
-            {BOTTOM_BAR_BUTTONS.map((button) => (
+            {visibleButtons.map((button) => (
               <BarButton
                 key={button.id}
                 button={button}

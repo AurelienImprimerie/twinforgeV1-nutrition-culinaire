@@ -10,7 +10,7 @@ import ProfileFastingTab from './Profile/ProfileFastingTab';
 import ProfileTrainingTab from './Profile/ProfileTrainingTab';
 import ProfileGeoTab from './Profile/ProfileGeoTab';
 import ProfileMenstrualTab from './Profile/ProfileMenstrualTab';
-import { useFeedback } from '../../hooks/useFeedback';
+import { useFeedback, useHideFastingForBulking } from '../../hooks';
 import logger from '../../lib/utils/logger';
 import ProfileAvatarTab from './Profile/ProfileAvatarTab';
 import PageHeader from '../../ui/page/PageHeader';
@@ -109,6 +109,9 @@ const Profile: React.FC = () => {
   // Check if user is female to show menstrual tab
   const isFemale = profile?.sex === 'female';
 
+  // Check if fasting should be hidden for bulking users
+  const hideFastingForBulking = useHideFastingForBulking();
+
   // Derive activeTab from URL search params or hash
   const activeTab = React.useMemo(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -163,9 +166,11 @@ const Profile: React.FC = () => {
           <Tabs.Trigger value="preferences" icon="Dumbbell">
             <span className="tab-text">Training</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="fasting" icon="Timer">
-            <span className="tab-text">Jeûne</span>
-          </Tabs.Trigger>
+          {!hideFastingForBulking && (
+            <Tabs.Trigger value="fasting" icon="Timer">
+              <span className="tab-text">Jeûne</span>
+            </Tabs.Trigger>
+          )}
           <Tabs.Trigger value="health" icon="Heart">
             <span className="tab-text">Santé</span>
           </Tabs.Trigger>
@@ -203,10 +208,12 @@ const Profile: React.FC = () => {
         <Tabs.Panel value="preferences">
           <ProfileTrainingTab />
         </Tabs.Panel>
-        
-        <Tabs.Panel value="fasting">
-          <ProfileFastingTab />
-        </Tabs.Panel>
+
+        {!hideFastingForBulking && (
+          <Tabs.Panel value="fasting">
+            <ProfileFastingTab />
+          </Tabs.Panel>
+        )}
 
         <Tabs.Panel value="geo">
           <ProfileGeoTab />

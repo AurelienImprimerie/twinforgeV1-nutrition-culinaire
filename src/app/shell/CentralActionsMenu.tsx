@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SpatialIcon from '../../ui/icons/SpatialIcon';
 import { ICONS } from '../../ui/icons/registry';
-import { useFeedback } from '../../hooks/useFeedback';
+import { useFeedback, useHideFastingForBulking } from '../../hooks';
 import { forgeStrike, tileClick, pillClick, homeClick, panelClose } from '../../audio/effects/forgeronSounds';
 import { useOverlayStore, Z_INDEX } from '../../system/store/overlayStore';
 import { QUICK_ACTION_SECTIONS, type QuickAction } from '../../config/quickActionsConfig';
@@ -43,6 +43,7 @@ const CentralActionsMenu: React.FC<CentralActionsMenuProps> = ({ isOpen }) => {
   const reduceMotion = useReducedMotion();
   const { click, success } = useFeedback();
   const { close: closeOverlay } = useOverlayStore();
+  const hideFastingForBulking = useHideFastingForBulking();
 
   // Récupération des sections par clé
   const nutritionSection = getSection(QUICK_ACTION_SECTIONS, 'nutrition');
@@ -51,6 +52,15 @@ const CentralActionsMenu: React.FC<CentralActionsMenuProps> = ({ isOpen }) => {
   const santeSection = getSection(QUICK_ACTION_SECTIONS, 'sante');
   const homeSection = getSection(QUICK_ACTION_SECTIONS, 'navigation');
   const mainActionsSection = getSection(QUICK_ACTION_SECTIONS, 'main-actions');
+
+  // Filtrer la section Santé pour masquer le jeûne si prise de masse
+  const filteredSanteSection = React.useMemo(() => {
+    if (!hideFastingForBulking) return santeSection;
+    return {
+      ...santeSection,
+      actions: santeSection.actions.filter(action => action.id !== 'start-fasting')
+    };
+  }, [santeSection, hideFastingForBulking]);
 
   const homeAction =
     homeSection.actions.find(
@@ -410,7 +420,7 @@ const CentralActionsMenu: React.FC<CentralActionsMenuProps> = ({ isOpen }) => {
             )}
 
             {/* ========== CATÉGORIE: SANTÉ ========== */}
-            {santeSection.actions.length > 0 && (
+            {filteredSanteSection.actions.length > 0 && (
               <div className="mb-3">
                 <div className="px-1.5 mb-1.5">
                   <h3 className="text-white/70 text-[11px] uppercase tracking-wider font-bold">
@@ -418,7 +428,7 @@ const CentralActionsMenu: React.FC<CentralActionsMenuProps> = ({ isOpen }) => {
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {santeSection.actions.map((a, i) => (
+                  {filteredSanteSection.actions.map((a, i) => (
                     <SecondaryPill key={a.id} action={a} index={i} />
                   ))}
                 </div>

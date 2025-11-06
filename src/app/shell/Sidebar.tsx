@@ -5,7 +5,7 @@ import { ICONS } from '../../ui/icons/registry';
 import SpatialIcon from '../../ui/icons/SpatialIcon';
 import { getCircuitColor } from '../../ui/theme/circuits';
 import { navFor } from './navigation';
-import { useFeedback } from '@/hooks';
+import { useFeedback, useHideFastingForBulking } from '@/hooks';
 import logger from '../../lib/utils/logger';
 import TokenBalanceWidget from './TokenBalanceWidget';
 import LogoutConfirmationModal from '../../ui/components/LogoutConfirmationModal';
@@ -277,12 +277,27 @@ function getSectionClass(title: string, type?: string): string {
 const Sidebar = React.memo(({ className = '' }: { className?: string }) => {
   const location = useLocation();
   const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
+  const hideFastingForBulking = useHideFastingForBulking();
 
   const [expandedForges, setExpandedForges] = useState<Record<string, boolean>>({});
   const [activeForge, setActiveForge] = useState<string | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const navigation = navFor();
+
+  // Filtrer la navigation pour masquer la Forge du Temps si prise de masse
+  const filteredNavigation = React.useMemo(() => {
+    return navigation.map(section => {
+      // Si c'est la section Santé, filtrer la Forge du Temps
+      if (section.title === 'Santé' && hideFastingForBulking) {
+        return {
+          ...section,
+          items: section.items.filter(item => item.to !== '/fasting')
+        };
+      }
+      return section;
+    });
+  }, [navigation, hideFastingForBulking]);
 
   const handleLogoutClick = useCallback(() => {
     logger.info('SIDEBAR', 'Logout button clicked');
@@ -305,7 +320,7 @@ const Sidebar = React.memo(({ className = '' }: { className?: string }) => {
     let newActiveForge: string | null = null;
     const newExpandedState: Record<string, boolean> = {};
 
-    navigation.forEach(section => {
+    filteredNavigation.forEach(section => {
       section.items.forEach(item => {
         if (item.subItems && item.subItems.length > 0) {
           const hasActiveSubItem = item.subItems.some(subItem => {
@@ -328,7 +343,7 @@ const Sidebar = React.memo(({ className = '' }: { className?: string }) => {
     // Update states
     setExpandedForges(newExpandedState);
     setActiveForge(newActiveForge);
-  }, [location.pathname]);
+  }, [location.pathname, filteredNavigation]);
 
   // Log sidebar render
   React.useEffect(() => {
@@ -374,12 +389,12 @@ const Sidebar = React.memo(({ className = '' }: { className?: string }) => {
       <div className="sidebar-content space-y-2 flex-1 pt-2">
 
         {/* Navigation Dynamique avec 3 Niveaux Hiérarchiques + Sous-menus */}
-        {navigation.map((section, sectionIndex) => (
+        {filteredNavigation.map((section, sectionIndex) => (
           <React.Fragment key={section.title || section.type}>
             <Section
               title={section.title}
               type={section.type}
-              isLastCategory={sectionIndex === navigation.length - 1 && section.type === 'forge-category'}
+              isLastCategory={sectionIndex === filteredNavigation.length - 1 && section.type === 'forge-category'}
             >
               {section.items.map((item) => (
                 <NavItem
