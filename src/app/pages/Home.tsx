@@ -8,11 +8,12 @@ import { Link } from '../nav/Link';
 import { useUserStore } from '../../system/store/userStore';
 import PageHeader from '../../ui/page/PageHeader';
 import { useToast } from '../../ui/components/ToastProvider';
-import { useWelcomeTokensToast } from '@/hooks';
+import { useWelcomeTokensToast, useHideFastingForBulking } from '@/hooks';
 
 const Home: React.FC = () => {
   const { profile } = useUserStore();
   const { showToast } = useToast();
+  const hideFastingForBulking = useHideFastingForBulking();
 
   useWelcomeTokensToast();
 
@@ -26,16 +27,16 @@ const Home: React.FC = () => {
         iconColor="#F7931E"
       />
       
-      {/* Carburant du Jour */}
+      {/* Carburant du Jour - Layout adaptatif selon objectif */}
       <motion.div
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className={hideFastingForBulking ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <Link to="/profile" className="w-full">
-          <GlassCard 
-            className="w-full text-center p-8 hover:scale-105 transition-transform" 
+          <GlassCard
+            className="w-full text-center p-8 hover:scale-105 transition-transform"
             interactive
             style={{
               background: `
@@ -52,7 +53,7 @@ const Home: React.FC = () => {
               backdropFilter: 'blur(20px) saturate(150%)'
             }}
           >
-            <div 
+            <div
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{
                 background: `
@@ -71,86 +72,259 @@ const Home: React.FC = () => {
             </p>
           </GlassCard>
         </Link>
-        
-        <Link to="/fasting" className="w-full">
-          <GlassCard 
-            className="w-full text-center p-8 hover:scale-105 transition-transform" 
+
+        {/* Section Activité - Toujours visible */}
+        <Link to="/activity" className="w-full">
+          <GlassCard
+            className="w-full text-center p-8 hover:scale-105 transition-transform"
             interactive
             style={{
               background: `
-                radial-gradient(circle at 30% 20%, color-mix(in srgb, #F59E0B 12%, transparent) 0%, transparent 60%),
-                radial-gradient(circle at 70% 80%, color-mix(in srgb, #EF4444 8%, transparent) 0%, transparent 50%),
+                radial-gradient(circle at 30% 20%, color-mix(in srgb, #3B82F6 12%, transparent) 0%, transparent 60%),
+                radial-gradient(circle at 70% 80%, color-mix(in srgb, #2563EB 8%, transparent) 0%, transparent 50%),
                 var(--glass-opacity)
               `,
-              borderColor: 'color-mix(in srgb, #F59E0B 25%, transparent)',
+              borderColor: 'color-mix(in srgb, #3B82F6 25%, transparent)',
               boxShadow: `
                 0 12px 40px rgba(0, 0, 0, 0.25),
-                0 0 30px color-mix(in srgb, #F59E0B 15%, transparent),
+                0 0 30px color-mix(in srgb, #3B82F6 15%, transparent),
                 inset 0 2px 0 rgba(255, 255, 255, 0.15)
               `,
               backdropFilter: 'blur(20px) saturate(150%)'
             }}
           >
-            <div 
+            <div
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{
                 background: `
                   radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%),
-                  linear-gradient(135deg, color-mix(in srgb, #F59E0B 35%, transparent), color-mix(in srgb, #F59E0B 25%, transparent))
+                  linear-gradient(135deg, color-mix(in srgb, #3B82F6 35%, transparent), color-mix(in srgb, #3B82F6 25%, transparent))
                 `,
-                border: '2px solid color-mix(in srgb, #F59E0B 50%, transparent)',
-                boxShadow: '0 0 30px color-mix(in srgb, #F59E0B 40%, transparent)'
+                border: '2px solid color-mix(in srgb, #3B82F6 50%, transparent)',
+                boxShadow: '0 0 30px color-mix(in srgb, #3B82F6 40%, transparent)'
               }}
             >
-              <SpatialIcon Icon={ICONS.Timer} size={24} style={{ color: '#F59E0B' }} variant="pure" />
+              <SpatialIcon Icon={ICONS.Activity} size={24} style={{ color: '#3B82F6' }} variant="pure" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Forge du Temps</h3>
+            <h3 className="text-xl font-bold text-white mb-2">Forge Énergétique</h3>
             <p className="text-white/70 text-sm">
-              Maîtrisez votre jeûne intermittent avec précision
+              Suivez votre activité physique quotidienne
             </p>
           </GlassCard>
         </Link>
-        
-        <Link to="/fasting/input" className="w-full">
-          <GlassCard 
-            className="w-full text-center p-8 hover:scale-105 transition-transform" 
+
+        {/* Section Santé - Toujours visible */}
+        <Link to="/vital" className="w-full">
+          <GlassCard
+            className="w-full text-center p-8 hover:scale-105 transition-transform"
             interactive
             style={{
               background: `
-                radial-gradient(circle at 30% 20%, color-mix(in srgb, #10B981 12%, transparent) 0%, transparent 60%),
-                radial-gradient(circle at 70% 80%, color-mix(in srgb, #22C55E 8%, transparent) 0%, transparent 50%),
+                radial-gradient(circle at 30% 20%, color-mix(in srgb, #EF4444 12%, transparent) 0%, transparent 60%),
+                radial-gradient(circle at 70% 80%, color-mix(in srgb, #DC2626 8%, transparent) 0%, transparent 50%),
                 var(--glass-opacity)
               `,
-              borderColor: 'color-mix(in srgb, #10B981 25%, transparent)',
+              borderColor: 'color-mix(in srgb, #EF4444 25%, transparent)',
               boxShadow: `
                 0 12px 40px rgba(0, 0, 0, 0.25),
-                0 0 30px color-mix(in srgb, #10B981 15%, transparent),
+                0 0 30px color-mix(in srgb, #EF4444 15%, transparent),
                 inset 0 2px 0 rgba(255, 255, 255, 0.15)
               `,
               backdropFilter: 'blur(20px) saturate(150%)'
             }}
           >
-            <div 
+            <div
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{
                 background: `
                   radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%),
-                  linear-gradient(135deg, color-mix(in srgb, #10B981 35%, transparent), color-mix(in srgb, #10B981 25%, transparent))
+                  linear-gradient(135deg, color-mix(in srgb, #EF4444 35%, transparent), color-mix(in srgb, #EF4444 25%, transparent))
                 `,
-                border: '2px solid color-mix(in srgb, #10B981 50%, transparent)',
-                boxShadow: '0 0 30px color-mix(in srgb, #10B981 40%, transparent)'
+                border: '2px solid color-mix(in srgb, #EF4444 50%, transparent)',
+                boxShadow: '0 0 30px color-mix(in srgb, #EF4444 40%, transparent)'
               }}
             >
-              <SpatialIcon Icon={ICONS.Timer} size={24} style={{ color: '#10B981' }} variant="pure" />
+              <SpatialIcon Icon={ICONS.HeartPulse} size={24} style={{ color: '#EF4444' }} variant="pure" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Tracker Suivi du Jeûne</h3>
+            <h3 className="text-xl font-bold text-white mb-2">Forge Vitale</h3>
             <p className="text-white/70 text-sm">
-              Démarrez et suivez vos sessions de jeûne
+              Médecine préventive et analyses de santé
             </p>
           </GlassCard>
         </Link>
+
+        {/* Section Jeûne - Masqué en prise de masse */}
+        {!hideFastingForBulking && (
+          <>
+            <Link to="/fasting" className="w-full">
+              <GlassCard
+                className="w-full text-center p-8 hover:scale-105 transition-transform"
+                interactive
+                style={{
+                  background: `
+                    radial-gradient(circle at 30% 20%, color-mix(in srgb, #F59E0B 12%, transparent) 0%, transparent 60%),
+                    radial-gradient(circle at 70% 80%, color-mix(in srgb, #EF4444 8%, transparent) 0%, transparent 50%),
+                    var(--glass-opacity)
+                  `,
+                  borderColor: 'color-mix(in srgb, #F59E0B 25%, transparent)',
+                  boxShadow: `
+                    0 12px 40px rgba(0, 0, 0, 0.25),
+                    0 0 30px color-mix(in srgb, #F59E0B 15%, transparent),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.15)
+                  `,
+                  backdropFilter: 'blur(20px) saturate(150%)'
+                }}
+              >
+                <div
+                  className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{
+                    background: `
+                      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%),
+                      linear-gradient(135deg, color-mix(in srgb, #F59E0B 35%, transparent), color-mix(in srgb, #F59E0B 25%, transparent))
+                    `,
+                    border: '2px solid color-mix(in srgb, #F59E0B 50%, transparent)',
+                    boxShadow: '0 0 30px color-mix(in srgb, #F59E0B 40%, transparent)'
+                  }}
+                >
+                  <SpatialIcon Icon={ICONS.Timer} size={24} style={{ color: '#F59E0B' }} variant="pure" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Forge du Temps</h3>
+                <p className="text-white/70 text-sm">
+                  Maîtrisez votre jeûne intermittent avec précision
+                </p>
+              </GlassCard>
+            </Link>
+
+            <Link to="/fasting/input" className="w-full">
+              <GlassCard
+                className="w-full text-center p-8 hover:scale-105 transition-transform"
+                interactive
+                style={{
+                  background: `
+                    radial-gradient(circle at 30% 20%, color-mix(in srgb, #10B981 12%, transparent) 0%, transparent 60%),
+                    radial-gradient(circle at 70% 80%, color-mix(in srgb, #22C55E 8%, transparent) 0%, transparent 50%),
+                    var(--glass-opacity)
+                  `,
+                  borderColor: 'color-mix(in srgb, #10B981 25%, transparent)',
+                  boxShadow: `
+                    0 12px 40px rgba(0, 0, 0, 0.25),
+                    0 0 30px color-mix(in srgb, #10B981 15%, transparent),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.15)
+                  `,
+                  backdropFilter: 'blur(20px) saturate(150%)'
+                }}
+              >
+                <div
+                  className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{
+                    background: `
+                      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%),
+                      linear-gradient(135deg, color-mix(in srgb, #10B981 35%, transparent), color-mix(in srgb, #10B981 25%, transparent))
+                    `,
+                    border: '2px solid color-mix(in srgb, #10B981 50%, transparent)',
+                    boxShadow: '0 0 30px color-mix(in srgb, #10B981 40%, transparent)'
+                  }}
+                >
+                  <SpatialIcon Icon={ICONS.Timer} size={24} style={{ color: '#10B981' }} variant="pure" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Tracker Suivi du Jeûne</h3>
+                <p className="text-white/70 text-sm">
+                  Démarrez et suivez vos sessions de jeûne
+                </p>
+              </GlassCard>
+            </Link>
+          </>
+        )}
       </motion.div>
-      
+
+      {/* Deuxième ligne - Tracker Activité et Forge Vitale en prise de masse */}
+      {hideFastingForBulking && (
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+        >
+          <Link to="/activity#daily" className="w-full">
+            <GlassCard
+              className="w-full text-center p-8 hover:scale-105 transition-transform"
+              interactive
+              style={{
+                background: `
+                  radial-gradient(circle at 30% 20%, color-mix(in srgb, #3B82F6 12%, transparent) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 80%, color-mix(in srgb, #2563EB 8%, transparent) 0%, transparent 50%),
+                  var(--glass-opacity)
+                `,
+                borderColor: 'color-mix(in srgb, #3B82F6 25%, transparent)',
+                boxShadow: `
+                  0 12px 40px rgba(0, 0, 0, 0.25),
+                  0 0 30px color-mix(in srgb, #3B82F6 15%, transparent),
+                  inset 0 2px 0 rgba(255, 255, 255, 0.15)
+                `,
+                backdropFilter: 'blur(20px) saturate(150%)'
+              }}
+            >
+              <div
+                className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                style={{
+                  background: `
+                    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%),
+                    linear-gradient(135deg, color-mix(in srgb, #3B82F6 35%, transparent), color-mix(in srgb, #3B82F6 25%, transparent))
+                  `,
+                  border: '2px solid color-mix(in srgb, #3B82F6 50%, transparent)',
+                  boxShadow: '0 0 30px color-mix(in srgb, #3B82F6 40%, transparent)'
+                }}
+              >
+                <SpatialIcon Icon={ICONS.Activity} size={24} style={{ color: '#3B82F6' }} variant="pure" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Tracker d'Activités</h3>
+              <p className="text-white/70 text-sm">
+                Enregistrez et suivez vos activités quotidiennes
+              </p>
+            </GlassCard>
+          </Link>
+
+          <Link to="/vital#dossier" className="w-full">
+            <GlassCard
+              className="w-full text-center p-8 hover:scale-105 transition-transform"
+              interactive
+              style={{
+                background: `
+                  radial-gradient(circle at 30% 20%, color-mix(in srgb, #EF4444 12%, transparent) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 80%, color-mix(in srgb, #DC2626 8%, transparent) 0%, transparent 50%),
+                  var(--glass-opacity)
+                `,
+                borderColor: 'color-mix(in srgb, #EF4444 25%, transparent)',
+                boxShadow: `
+                  0 12px 40px rgba(0, 0, 0, 0.25),
+                  0 0 30px color-mix(in srgb, #EF4444 15%, transparent),
+                  inset 0 2px 0 rgba(255, 255, 255, 0.15)
+                `,
+                backdropFilter: 'blur(20px) saturate(150%)'
+              }}
+            >
+              <div
+                className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                style={{
+                  background: `
+                    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%),
+                    linear-gradient(135deg, color-mix(in srgb, #EF4444 35%, transparent), color-mix(in srgb, #EF4444 25%, transparent))
+                  `,
+                  border: '2px solid color-mix(in srgb, #EF4444 50%, transparent)',
+                  boxShadow: '0 0 30px color-mix(in srgb, #EF4444 40%, transparent)'
+                }}
+              >
+                <SpatialIcon Icon={ICONS.HeartPulse} size={24} style={{ color: '#EF4444' }} variant="pure" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Dossier Médical</h3>
+              <p className="text-white/70 text-sm">
+                Accédez à votre dossier de santé complet
+              </p>
+            </GlassCard>
+          </Link>
+        </motion.div>
+      )}
+
       {/* Outils de Forge */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
