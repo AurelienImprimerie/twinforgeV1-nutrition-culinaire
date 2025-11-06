@@ -4,7 +4,8 @@
  * Centralizes all user data and provides unified access to chat and realtime
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '../../supabase/client';
 import logger from '../../../lib/utils/logger';
 import type {
   BrainContext,
@@ -76,15 +77,8 @@ class BrainCoreService {
 
       this.currentUserId = userId;
 
-      // Initialize Supabase client
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase credentials not configured');
-      }
-
-      this.supabase = createClient(supabaseUrl, supabaseKey);
+      // Use singleton authenticated Supabase client
+      this.supabase = supabase;
 
       // Initialize core services
       this.cacheManager = new CacheManager();
