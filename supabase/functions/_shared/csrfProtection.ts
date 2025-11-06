@@ -119,8 +119,8 @@ export class CSRFProtection {
     const isDevelopment =
       requestOrigin.includes('localhost') ||
       requestOrigin.includes('127.0.0.1') ||
-      requestOrigin.includes('.webcontainer-api.io') ||
-      requestOrigin.includes('.stackblitz.io');
+      requestOrigin.includes('webcontainer-api.io') ||  // Matches all WebContainer subdomains
+      requestOrigin.includes('stackblitz.io');
 
     if (isDevelopment) {
       return {

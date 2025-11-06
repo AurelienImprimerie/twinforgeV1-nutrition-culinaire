@@ -25,6 +25,15 @@ export class ChatIntegration {
     mode: ChatMode
   ): Promise<ChatAIRequest> {
     try {
+      // Check if brain is initialized before attempting to get context
+      if (!brainCore.isInitialized()) {
+        logger.info('CHAT_INTEGRATION', 'Brain not initialized, skipping enrichment', {
+          mode,
+          messageCount: request.messages.length
+        });
+        return request;
+      }
+
       // Get current brain context
       const context = await brainCore.getContext();
       const userId = brainCore.getCurrentUserId();
