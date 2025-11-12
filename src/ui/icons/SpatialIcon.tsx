@@ -7,9 +7,11 @@ import { usePreferredMotion, useHasTouch } from '../../system/device/DeviceProvi
 import { usePerformanceMode } from '../../system/context/PerformanceModeContext';
 import { designKernel } from '../../styles/designKernel';
 import { visionCurves } from '../../lib/motion/gpuVariants';
+import { ICONS, IconName } from './registry';
 
 interface SpatialIconProps {
   Icon?: LucideIcon; // rendu optionnel pour éviter le crash si undefined
+  name?: IconName; // Alternative: use icon name from registry
   size?: number;
   className?: string;
   animate?: boolean;
@@ -51,6 +53,7 @@ function getHaloRadius(size: number): number {
 
 const SpatialIcon: React.FC<SpatialIconProps> = ({
   Icon,
+  name,
   size = 24,
   className = '',
   animate: animateProp = true,
@@ -73,6 +76,9 @@ const SpatialIcon: React.FC<SpatialIconProps> = ({
   const hasTouch = useHasTouch();
   const { isPerformanceMode } = usePerformanceMode();
   const iconRef = useRef<HTMLDivElement>(null);
+
+  // Resolve icon from name if provided, otherwise use Icon prop
+  const ResolvedIcon = name ? ICONS[name] : Icon;
 
   // CRITICAL: Désactiver les animations sur mobile et en mode performance
   const shouldAnimate = !preferredMotion && animateProp && window.innerWidth > 768 && !isPerformanceMode;
@@ -208,8 +214,8 @@ const SpatialIcon: React.FC<SpatialIconProps> = ({
         />
       )}
 
-      {Icon ? (
-        <Icon
+      {ResolvedIcon ? (
+        <ResolvedIcon
           size={size}
           color={iconColor}
           strokeWidth={strokeWidth}
