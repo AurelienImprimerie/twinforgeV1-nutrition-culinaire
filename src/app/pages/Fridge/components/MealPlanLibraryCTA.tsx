@@ -140,7 +140,7 @@ const MealPlanLibraryCTA: React.FC = () => {
         >
           <GamingPointsBadge
             points={35}
-            forgeName="Forge Culinaire"
+            forgeName="generic"
             size="large"
             animated={!isPerformanceMode}
           />

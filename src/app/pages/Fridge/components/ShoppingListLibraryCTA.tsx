@@ -6,6 +6,7 @@ import GlassCard from '../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../ui/icons/registry';
 import { useFeedback } from '../../../../hooks/useFeedback';
+import GamingPointsBadge from '../../../../components/dashboard/GamingPointsBadge';
 
 const ShoppingListLibraryCTA: React.FC = () => {
   const navigate = useNavigate();
@@ -113,6 +114,22 @@ const ShoppingListLibraryCTA: React.FC = () => {
             />
           </MotionDiv>
         </div>
+
+        {/* Badge Points Gaming */}
+        <MotionDiv
+          {...(!isPerformanceMode && {
+            initial: { scale: 0.8, opacity: 0 },
+            animate: { scale: 1, opacity: 1 },
+            transition: { duration: 0.4, delay: 0.1 }
+          })}
+        >
+          <GamingPointsBadge
+            points={15}
+            forgeName="Forge Culinaire"
+            size="large"
+            animated={!isPerformanceMode}
+          />
+        </MotionDiv>
 
         {/* Title and Description */}
         <MotionDiv
