@@ -82,7 +82,7 @@ const MealResultsDisplayStep: React.FC<MealResultsDisplayStepProps> = ({
         points={25}
         forgeName="Forge Nutritionnelle"
         title="Analyse Nutritionnelle Complète !"
-        message={`${analysisResults.foods?.length || 0} aliments détectés - ${Math.round(analysisResults.total_calories)} calories`}
+        message={`${analysisResults.detected_foods?.length || 0} aliments détectés - ${Math.round(analysisResults.total_calories)} calories`}
       />
 
       <div>

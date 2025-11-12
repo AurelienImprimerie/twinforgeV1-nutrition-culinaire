@@ -33,6 +33,46 @@ const DetectedFoodsCard: React.FC<DetectedFoodsCardProps> = ({
 }) => {
   const reduceMotion = useReducedMotion();
 
+  // Debug log to check data structure
+  React.useEffect(() => {
+    console.log('🍽️ DetectedFoodsCard - analysisResults:', {
+      hasDetectedFoods: !!analysisResults.detected_foods,
+      detectedFoodsLength: analysisResults.detected_foods?.length,
+      detectedFoodsType: typeof analysisResults.detected_foods,
+      detectedFoods: analysisResults.detected_foods,
+      allKeys: Object.keys(analysisResults)
+    });
+  }, [analysisResults]);
+
+  // Ensure detected_foods is an array
+  const detectedFoods = Array.isArray(analysisResults.detected_foods)
+    ? analysisResults.detected_foods
+    : [];
+
+  if (detectedFoods.length === 0) {
+    return (
+      <div className="detected-foods-card-container">
+        <div className="flex items-center gap-3 mb-6">
+          <motion.div
+            className="detected-foods-header-icon"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            <SpatialIcon
+              Icon={ICONS.Eye}
+              size={20}
+              style={{ color: 'var(--nutrition-accent)' }}
+            />
+          </motion.div>
+          <h3 className="text-xl font-bold text-white">Aliments Détectés</h3>
+        </div>
+        <div className="text-white/60 text-center py-4">
+          Aucun aliment détecté dans cette analyse
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="detected-foods-card-container">
       <div className="flex items-center gap-3 mb-6">
@@ -49,9 +89,9 @@ const DetectedFoodsCard: React.FC<DetectedFoodsCardProps> = ({
         </motion.div>
         <h3 className="text-xl font-bold text-white">Aliments Détectés</h3>
       </div>
-      
+
       <div className="space-y-3">
-        {analysisResults.detected_foods.map((food: any, index: number) => (
+        {detectedFoods.map((food: any, index: number) => (
           <motion.div
             key={index}
             className="food-item-card"

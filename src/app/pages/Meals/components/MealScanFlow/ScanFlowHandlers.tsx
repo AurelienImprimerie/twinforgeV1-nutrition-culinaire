@@ -409,7 +409,16 @@ export function useScanFlowHandlers({
       // Import dynamique pour éviter les dépendances circulaires
       const { mealsRepo } = await import('../../../../../system/data/repositories/mealsRepo');
       const analysisResponse = await mealsRepo.analyzeMeal(analysisRequest);
-      
+
+      // Debug log to check analysis response structure
+      console.log('🔍 ScanFlowHandlers - analysisResponse:', {
+        hasDetectedFoods: !!analysisResponse.detected_foods,
+        detectedFoodsLength: analysisResponse.detected_foods?.length,
+        detectedFoodsType: typeof analysisResponse.detected_foods,
+        detectedFoods: analysisResponse.detected_foods,
+        allKeys: Object.keys(analysisResponse)
+      });
+
       // Store analysis metadata for display
       const analysisMetadata = {
         model: analysisResponse.analysis_metadata.ai_model_used,
