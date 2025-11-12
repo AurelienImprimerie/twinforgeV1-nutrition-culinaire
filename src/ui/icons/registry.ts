@@ -134,6 +134,9 @@ export const ICONS = {
   Filter: L.Filter,
   Database: L.Database,
   Server: L.Server,
+  Book: L.Book,
+  BookOpen: L.BookOpen,
+  Library: L.Library,
 
   Ruler: L.Ruler,
   Scale: L.Scale,
