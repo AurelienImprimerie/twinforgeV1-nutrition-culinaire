@@ -69,15 +69,29 @@ export interface WeightUpdate {
 }
 
 const XP_VALUES = {
-  MEAL_SCAN: 10,
+  // Forge Nutritionnelle
+  MEAL_SCAN: 25, // Scanner un repas (harmonisé avec useForgeXpRewards)
+  BARCODE_SCAN: 15, // Scanner un code-barre
   DAILY_CALORIE_GOAL_MET: 50,
+
+  // Forge Culinaire
+  FRIDGE_SCAN: 30, // Scanner son frigo
+  RECIPE_GENERATED: 20, // Générer une recette
+  MEAL_PLAN_GENERATED: 35, // Générer un plan de repas
+  SHOPPING_LIST_GENERATED: 15, // Générer une liste de courses
+
+  // Training
   TRAINING_SESSION: 30,
   FOLLOWING_MEAL_PLAN: 40,
   BODY_SCAN: 25,
+
+  // Fasting
   FASTING_SUCCESS: 50, // Jeûne complété avec succès (augmenté de 35 à 50)
   FASTING_PARTIAL_8H: 25, // Jeûne partiel 8h+ (seuil métabolique)
   FASTING_PARTIAL_12H: 35, // Jeûne partiel 12h+
   FASTING_BONUS_EXCEEDED: 20, // Bonus si objectif dépassé de 20%+
+
+  // Other
   WEARABLE_SYNC: 15,
   WEIGHT_UPDATE: 15,
   WEIGHT_MILESTONE_BONUS: 25,
@@ -204,6 +218,26 @@ class GamificationService {
 
   async awardMealScanXp(userId: string, mealData?: Record<string, any>): Promise<XpAwardResult> {
     return this.awardXp(userId, 'meal_scan', 'nutrition', XP_VALUES.MEAL_SCAN, mealData || {});
+  }
+
+  async awardBarcodeScanXp(userId: string, barcodeData?: Record<string, any>): Promise<XpAwardResult> {
+    return this.awardXp(userId, 'barcode_scan', 'nutrition', XP_VALUES.BARCODE_SCAN, barcodeData || {});
+  }
+
+  async awardFridgeScanXp(userId: string, scanData?: Record<string, any>): Promise<XpAwardResult> {
+    return this.awardXp(userId, 'fridge_scan', 'nutrition', XP_VALUES.FRIDGE_SCAN, scanData || {});
+  }
+
+  async awardRecipeGeneratedXp(userId: string, recipeData?: Record<string, any>): Promise<XpAwardResult> {
+    return this.awardXp(userId, 'recipe_generated', 'nutrition', XP_VALUES.RECIPE_GENERATED, recipeData || {});
+  }
+
+  async awardMealPlanGeneratedXp(userId: string, planData?: Record<string, any>): Promise<XpAwardResult> {
+    return this.awardXp(userId, 'meal_plan_generated', 'nutrition', XP_VALUES.MEAL_PLAN_GENERATED, planData || {});
+  }
+
+  async awardShoppingListGeneratedXp(userId: string, listData?: Record<string, any>): Promise<XpAwardResult> {
+    return this.awardXp(userId, 'shopping_list_generated', 'nutrition', XP_VALUES.SHOPPING_LIST_GENERATED, listData || {});
   }
 
   async awardCalorieGoalMetXp(

@@ -246,6 +246,18 @@ export const createSessionActions = (
         const { useForgeXpRewards } = await import('../../../../hooks/useForgeXpRewards');
         const { awardForgeXpSilently } = useForgeXpRewards();
         await awardForgeXpSilently('fridge_scan');
+
+        // Force immediate refresh of gaming widget
+        const { queryClient } = await import('../../../../app/providers/AppProviders');
+        await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
+        await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+        await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+
+        logger.info('FRIDGE_SCAN_PIPELINE', 'XP awarded and gaming widget refreshed', {
+          action: 'fridge_scan',
+          xpAwarded: 30,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
         logger.warn('FRIDGE_SCAN_PIPELINE', 'Failed to award XP for fridge scan', {
           error: error instanceof Error ? error.message : 'Unknown error'

@@ -464,11 +464,27 @@ export function useScanFlowHandlers({
       try {
         if (scanFlowState.capturedPhoto) {
           await awardForgeXpSilently('meal_scan');
+          logger.info('MEAL_SCAN_FLOW', 'XP awarded for meal scan', {
+            clientScanId,
+            xpAwarded: 25,
+            timestamp: new Date().toISOString()
+          });
         }
 
         if (scanFlowState.scannedProducts.length > 0) {
           await awardForgeXpSilently('barcode_scan');
+          logger.info('MEAL_SCAN_FLOW', 'XP awarded for barcode scan', {
+            clientScanId,
+            xpAwarded: 15,
+            productsScanned: scanFlowState.scannedProducts.length,
+            timestamp: new Date().toISOString()
+          });
         }
+
+        // Force immediate refresh of gaming widget
+        await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
+        await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+        await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
       } catch (error) {
         console.error('[MealScan] Failed to award XP:', error);
       }

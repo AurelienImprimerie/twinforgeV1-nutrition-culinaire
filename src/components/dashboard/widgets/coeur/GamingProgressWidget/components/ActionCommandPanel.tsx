@@ -33,7 +33,7 @@ const DAILY_ACTIONS: ActionButton[] = [
     id: 'meal-scan',
     label: 'Scanner un Repas',
     icon: 'UtensilsCrossed',
-    xp: 10,
+    xp: 25,
     route: '/fridge',
     description: 'Track tes calories automatiquement',
     color: '#F59E0B',

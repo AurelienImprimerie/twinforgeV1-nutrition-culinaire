@@ -329,6 +329,19 @@ export const generateMealPlanCore = async (
       const { useForgeXpRewards } = await import('../../../../../hooks/useForgeXpRewards');
       const { awardForgeXpSilently } = useForgeXpRewards();
       await awardForgeXpSilently('meal_plan_generated');
+
+      // Force immediate refresh of gaming widget
+      const { queryClient } = await import('../../../../../app/providers/AppProviders');
+      await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
+      await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+
+      logger.info('MEAL_PLAN_STORE', 'XP awarded and gaming widget refreshed', {
+        action: 'meal_plan_generated',
+        xpAwarded: 35,
+        weekNumber,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       logger.warn('MEAL_PLAN_STORE', 'Failed to award XP for meal plan', {
         error: error instanceof Error ? error.message : 'Unknown error'

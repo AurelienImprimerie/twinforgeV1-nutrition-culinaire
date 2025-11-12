@@ -609,6 +609,42 @@ export const createRecipeGenerationActions = (
               loadingMessage: '',
               isActive: false
             });
+
+            // Award XP for recipe generation (async IIFE)
+            (async () => {
+              try {
+                const { useUserStore } = await import('../../userStore');
+                const userId = useUserStore.getState().session?.user?.id;
+
+                if (userId && totalRecipesReceived > 0) {
+                  const { gamificationService } = await import('../../../../services/dashboard/coeur');
+                  await gamificationService.awardRecipeGeneratedXp(userId, {
+                    sessionId: state.currentSessionId,
+                    recipesGenerated: totalRecipesReceived,
+                    timestamp: new Date().toISOString()
+                  });
+
+                  logger.info('FRIDGE_SCAN_PIPELINE', 'XP awarded for recipe generation', {
+                    sessionId: state.currentSessionId,
+                    recipesGenerated: totalRecipesReceived,
+                    xpAwarded: 20,
+                    timestamp: new Date().toISOString()
+                  });
+
+                  // Invalidate gamification queries to refresh gaming widget
+                  const { queryClient } = await import('../../../../app/providers/AppProviders');
+                  await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
+                  await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+                  await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+                }
+              } catch (xpError) {
+                logger.warn('FRIDGE_SCAN_PIPELINE', 'Failed to award XP for recipe generation', {
+                  error: xpError instanceof Error ? xpError.message : 'Unknown error',
+                  sessionId: state.currentSessionId,
+                  timestamp: new Date().toISOString()
+                });
+              }
+            })();
           } catch (error) {
             logger.error('FRIDGE_SCAN_PIPELINE', 'Error parsing complete event', {
               sessionId: state.currentSessionId,

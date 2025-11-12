@@ -1,5 +1,6 @@
 import { useMarkActionCompleted } from './coeur/useDailyActionsTracking';
 import { useToast } from '@/ui/components/ToastProvider';
+import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * XP rewards for Forge Culinaire and Forge Nutritionnelle actions
@@ -27,6 +28,7 @@ export type ForgeActionId = keyof typeof FORGE_XP_REWARDS;
 export function useForgeXpRewards() {
   const { mutateAsync: markCompleted } = useMarkActionCompleted();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   /**
    * Award XP for a forge action
@@ -63,10 +65,17 @@ export function useForgeXpRewards() {
     try {
       const xpReward = FORGE_XP_REWARDS[actionId];
 
-      return await markCompleted({
+      const result = await markCompleted({
         actionId,
         xpEarned: xpReward,
       });
+
+      // Force immediate refresh of gaming widget
+      await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
+      await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+
+      return result;
     } catch (error) {
       console.error('[useForgeXpRewards] Error awarding XP silently:', error);
       throw error;
