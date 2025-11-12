@@ -4,6 +4,7 @@ import GlassCard from '../../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../../ui/icons/registry';
 import MealProgressHeader from '../MealProgressHeader';
+import PipelineGamingHint from '../../../../../components/dashboard/PipelineGamingHint';
 import type { BarcodeAnalysisResults } from '../MealScanFlow/ScanFlowState';
 
 interface BarcodeResultsDisplayStepProps {
@@ -182,6 +183,15 @@ const BarcodeResultsDisplayStep: React.FC<BarcodeResultsDisplayStepProps> = ({
           </div>
         </GlassCard>
       </motion.div>
+
+      {/* Gaming Hint - Centré */}
+      <div className="flex justify-center">
+        <PipelineGamingHint
+          points={25}
+          forgeName="Forge Nutritionnelle"
+          message="Code-barre scanné avec succès !"
+        />
+      </div>
 
       <div
         className="fixed bottom-0 left-0 right-0 p-4 z-50"

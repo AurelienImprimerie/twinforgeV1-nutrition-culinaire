@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import GlassCard from '../../../../../ui/cards/GlassCard';
 import SpatialIcon from '../../../../../ui/icons/SpatialIcon';
 import { ICONS } from '../../../../../ui/icons/registry';
+import PipelineGamingHint from '../../../../../components/dashboard/PipelineGamingHint';
 
 interface EmptyBarcodeStateProps {
   onBarcodeClick: () => void;
@@ -233,6 +234,15 @@ const EmptyBarcodeState: React.FC<EmptyBarcodeStateProps> = ({
                 </span>
               </div>
             </button>
+
+            {/* Gaming Hint - Centré */}
+            <div className="mt-4 flex justify-center">
+              <PipelineGamingHint
+                points={25}
+                forgeName="Forge Nutritionnelle"
+                message="Scannez un code-barre pour gagner des points"
+              />
+            </div>
           </div>
         </div>
       </GlassCard>

@@ -320,8 +320,8 @@ const CaptureGuide: React.FC<CaptureGuideProps> = ({
           </div>
         </button>
 
-        {/* Gaming Hint */}
-        <div className="mt-4">
+        {/* Gaming Hint - Centré */}
+        <div className="mt-4 flex justify-center">
           <PipelineGamingHint
             points={25}
             forgeName="Forge Nutritionnelle"

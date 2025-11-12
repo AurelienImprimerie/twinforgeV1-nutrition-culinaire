@@ -9,7 +9,7 @@
   2. Actions Defined
     Forge Nutritionnelle (Nutritional Forge):
     - meal_scan: 25 XP - Scan a meal photo
-    - barcode_scan: 15 XP - Scan a product barcode
+    - barcode_scan: 25 XP - Scan a product barcode
     - daily_recap_viewed: 10 XP - View daily nutrition summary
     - trend_analysis_viewed: 10 XP - View nutrition trends
 
@@ -35,7 +35,7 @@ SELECT * FROM (
   VALUES
     -- Forge Nutritionnelle
     ('meal_scan', 'Forge Nutritionnelle', 'Scan a meal', 25),
-    ('barcode_scan', 'Forge Nutritionnelle', 'Scan a barcode', 15),
+    ('barcode_scan', 'Forge Nutritionnelle', 'Scan a barcode', 25),
     ('daily_recap_viewed', 'Forge Nutritionnelle', 'View daily recap', 10),
     ('trend_analysis_viewed', 'Forge Nutritionnelle', 'View trend analysis', 10),
 
