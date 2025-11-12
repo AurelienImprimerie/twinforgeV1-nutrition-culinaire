@@ -118,10 +118,10 @@ export const useFridgeScanActions = ({
       
       startProgressSimulation(
         [
-          { message: 'Initialisation de l\'analyse IA...', duration: 2000, icon: 'Zap' },
-          { message: 'Traitement des images avec GPT-4o...', duration: 8000, icon: 'Eye' },
-          { message: 'Détection des ingrédients...', duration: 4000, icon: 'Search' },
-          { message: 'Normalisation de l\'inventaire...', duration: 3000, icon: 'CheckCircle' }
+          { message: 'Initialisation de l\'analyse IA...', duration: 5000, icon: 'Zap' },
+          { message: 'Traitement des images avec GPT-4o...', duration: 40000, icon: 'Eye' },
+          { message: 'Détection des ingrédients...', duration: 15000, icon: 'Search' },
+          { message: 'Normalisation de l\'inventaire...', duration: 10000, icon: 'CheckCircle' }
         ],
         analyzeStep?.startProgress || 33,
         validationStep?.startProgress || 66

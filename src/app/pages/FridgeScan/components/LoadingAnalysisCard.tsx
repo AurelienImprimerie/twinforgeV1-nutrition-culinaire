@@ -45,12 +45,10 @@ const LoadingAnalysisCard: React.FC<LoadingAnalysisCardProps> = ({
   
   // Étapes de chargement détaillées pour l'Atelier de Recettes
   const loadingSteps = [
-    { message: 'Téléchargement des photos...', duration: 3000, icon: 'Upload' },
-    { message: 'Analyse des ingrédients par la Forge...', duration: 12000, icon: 'Zap' },
-    { message: 'Détection des aliments...', duration: 8000, icon: 'Search' },
-    { message: 'Évaluation de la fraîcheur...', duration: 6000, icon: 'Heart' },
-    { message: 'Normalisation des données...', duration: 4000, icon: 'Settings' },
-    { message: 'Préparation de l\'inventaire...', duration: 3000, icon: 'Check' }
+    { message: 'Initialisation de l\'analyse IA...', duration: 5000, icon: 'Zap' },
+    { message: 'Traitement des images avec GPT-4o...', duration: 40000, icon: 'Eye' },
+    { message: 'Détection des ingrédients...', duration: 15000, icon: 'Search' },
+    { message: 'Normalisation de l\'inventaire...', duration: 10000, icon: 'CheckCircle' }
   ];
 
   return (
@@ -445,7 +443,7 @@ const LoadingAnalysisCard: React.FC<LoadingAnalysisCardProps> = ({
               })}
             />
             <span className="text-cyan-300 text-sm font-medium">
-              Analyse de la Forge en cours... (~15-45 secondes)
+              Analyse de la Forge en cours... (~60-75 secondes)
             </span>
           </MotionDiv>
         </div>
