@@ -287,18 +287,13 @@ const DailyRecapTab: React.FC<DailyRecapTabProps> = ({ onLoadingChange }) => {
   // Même si isLoading est true (refetch en arrière-plan)
   const hasCachedData = todayMeals !== undefined;
 
-  // Show skeleton only when truly loading for the first time
+  // Show skeleton only when truly loading for the first time (no cached data)
   if (isLoading && !hasCachedData) {
     return <DailyRecapSkeleton />;
   }
 
-  // Show skeleton when no meals data exists at all (empty state with loading appearance)
-  if (todayStats.mealsCount === 0 && !todayMeals) {
-    return <DailyRecapSkeleton />;
-  }
-
-  // Show empty state if no meals history at all
-  if (todayStats.mealsCount === 0 && !hasAnyMealHistory) {
+  // Show empty state if no meals today AND no historical meals
+  if (todayStats.mealsCount === 0 && !hasAnyMealHistory && !isLoading) {
     return <EmptyMealsScannerState />;
   }
 
