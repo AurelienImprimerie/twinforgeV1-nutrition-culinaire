@@ -165,42 +165,52 @@ const DynamicScanCTA: React.FC<DynamicScanCTAProps> = ({
 
         <div className="relative z-10 space-y-4 md:space-y-6">
           {/* Icône Principale Dynamique avec Particules Jaillissantes */}
-          <div
-            className={`w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full flex items-center justify-center relative ${
-              !isPerformanceMode && !reduceMotion ? 'icon-breathing-css' : ''
-            }`}
-            style={iconStyles}
-          >
-            <SpatialIcon
-              Icon={ICONS[urgencyConfig.icon as keyof typeof ICONS]}
-              size={40}
-              style={{ color: urgencyConfig.color }}
+          <div className="relative flex flex-col items-center gap-3">
+            <div
+              className={`w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full flex items-center justify-center relative ${
+                !isPerformanceMode && !reduceMotion ? 'icon-breathing-css' : ''
+              }`}
+              style={iconStyles}
+            >
+              <SpatialIcon
+                Icon={ICONS[urgencyConfig.icon as keyof typeof ICONS]}
+                size={40}
+                style={{ color: urgencyConfig.color }}
+              />
+
+              {/* Particules de Forge Jaillissantes - Style Forge Énergétique */}
+              {!isPerformanceMode && !reduceMotion &&
+                [...Array(6)].map((_, i) => {
+                  const angle = (i * 360) / 6;
+                  const radius = 60;
+                  const x = Math.cos((angle * Math.PI) / 180) * radius;
+                  const y = Math.sin((angle * Math.PI) / 180) * radius;
+
+                  return (
+                    <div
+                      key={i}
+                      className={`absolute w-2 h-2 rounded-full dynamic-particle-css dynamic-particle-css--${i + 1}`}
+                      style={{
+                        background: urgencyConfig.color,
+                        boxShadow: `0 0 12px color-mix(in srgb, ${urgencyConfig.color} 70%, transparent)`,
+                        '--particle-x': `${x * 0.4}px`,
+                        '--particle-y': `${y * 0.4}px`,
+                        '--particle-x-end': `${x}px`,
+                        '--particle-y-end': `${y}px`
+                      } as React.CSSProperties}
+                    />
+                  );
+                })
+              }
+            </div>
+
+            {/* Gaming Badge - Sous l'icône */}
+            <GamingPointsBadge
+              points={25}
+              forgeName="Forge Nutritionnelle"
+              size="small"
+              animated={!isPerformanceMode}
             />
-
-            {/* Particules de Forge Jaillissantes - Style Forge Énergétique */}
-            {!isPerformanceMode && !reduceMotion &&
-              [...Array(6)].map((_, i) => {
-                const angle = (i * 360) / 6;
-                const radius = 60;
-                const x = Math.cos((angle * Math.PI) / 180) * radius;
-                const y = Math.sin((angle * Math.PI) / 180) * radius;
-
-                return (
-                  <div
-                    key={i}
-                    className={`absolute w-2 h-2 rounded-full dynamic-particle-css dynamic-particle-css--${i + 1}`}
-                    style={{
-                      background: urgencyConfig.color,
-                      boxShadow: `0 0 12px color-mix(in srgb, ${urgencyConfig.color} 70%, transparent)`,
-                      '--particle-x': `${x * 0.4}px`,
-                      '--particle-y': `${y * 0.4}px`,
-                      '--particle-x-end': `${x}px`,
-                      '--particle-y-end': `${y}px`
-                    } as React.CSSProperties}
-                  />
-                );
-              })
-            }
           </div>
 
           {/* Contenu Textuel Dynamique */}
@@ -229,16 +239,6 @@ const DynamicScanCTA: React.FC<DynamicScanCTAProps> = ({
               }`}
               style={buttonStyles}
             >
-              {/* Gaming Badge - Top Right */}
-              <div className="absolute top-1 right-1">
-                <GamingPointsBadge
-                  points={25}
-                  forgeName="Forge Nutritionnelle"
-                  size="small"
-                  animated={!isPerformanceMode}
-                />
-              </div>
-
               <div className="flex items-center justify-center gap-3">
                 <SpatialIcon
                   Icon={ICONS[urgencyConfig.icon as keyof typeof ICONS]}
