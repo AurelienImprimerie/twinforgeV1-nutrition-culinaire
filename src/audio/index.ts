@@ -30,6 +30,7 @@ export * from './effects/statusSounds';
 export * from './effects/navigationSounds';
 export * from './effects/forgeronSounds';
 export * from './effects/spatialEffects';
+export * from './effects/gamingSounds';
 
 // Explicit exports for countdown sounds
 export { countdownTick, countdownGo } from './effects/statusSounds';
