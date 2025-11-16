@@ -106,6 +106,9 @@
 @import './components/nutrition/fridge-scan-styles.css';
 @import '../ui/components/skeletons/skeletons.css';
 
+/* Notifications */
+@import './components/notifications/points-gain-notification.css';
+
 /* =========================================
    PHASE 6: LAYOUT ET TYPOGRAPHY
    ========================================= */

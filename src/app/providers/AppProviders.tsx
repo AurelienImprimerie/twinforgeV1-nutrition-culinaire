@@ -16,6 +16,7 @@ import logger from '../../lib/utils/logger';
 import { BackgroundManager } from '../../ui/components/BackgroundManager';
 import PerformanceRecommendationAlert, { usePerformanceRecommendationAlert } from '../../ui/components/PerformanceRecommendationAlert';
 import { BrainInitializer } from './BrainInitializer';
+import PointsGainNotification from '../../ui/components/PointsGainNotification';
 
 // Create QueryClient with enhanced cache configuration for persistence
 // Export for use in stores and services
@@ -277,6 +278,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                       <TokenRefreshManager>
                         <BrainInitializer>
                           <PerformanceAlertManager />
+                          <PointsGainNotification />
                           {children}
                         </BrainInitializer>
                       </TokenRefreshManager>

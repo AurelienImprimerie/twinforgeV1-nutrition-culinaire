@@ -1,6 +1,8 @@
 import { useMarkActionCompleted } from './coeur/useDailyActionsTracking';
 import { useToast } from '@/ui/components/ToastProvider';
 import { useQueryClient } from '@tanstack/react-query';
+import { usePointsNotificationStore } from '@/system/store/pointsNotificationStore';
+import { ICONS } from '@/ui/icons/registry';
 
 /**
  * XP rewards for Forge Culinaire and Forge Nutritionnelle actions
@@ -22,6 +24,51 @@ export const FORGE_XP_REWARDS = {
 export type ForgeActionId = keyof typeof FORGE_XP_REWARDS;
 
 /**
+ * Get icon for action
+ */
+function getActionIcon(actionId: ForgeActionId): keyof typeof ICONS {
+  const icons: Record<ForgeActionId, keyof typeof ICONS> = {
+    meal_scan: 'Utensils',
+    barcode_scan: 'ScanLine',
+    daily_recap_viewed: 'Calendar',
+    trend_analysis_viewed: 'TrendingUp',
+    fridge_scan: 'Refrigerator',
+    recipe_generated: 'ChefHat',
+    meal_plan_generated: 'Calendar',
+    shopping_list_generated: 'ShoppingCart',
+  };
+  return icons[actionId] || 'Star';
+}
+
+/**
+ * Get color for action
+ */
+function getActionColor(actionId: ForgeActionId): string {
+  const nutritionColor = '#10B981'; // Vert - Forge Nutritionnelle
+  const culinaireColor = '#EC4899'; // Rose - Forge Culinaire
+
+  const colors: Record<ForgeActionId, string> = {
+    meal_scan: nutritionColor,
+    barcode_scan: nutritionColor,
+    daily_recap_viewed: nutritionColor,
+    trend_analysis_viewed: nutritionColor,
+    fridge_scan: culinaireColor,
+    recipe_generated: culinaireColor,
+    meal_plan_generated: culinaireColor,
+    shopping_list_generated: culinaireColor,
+  };
+  return colors[actionId] || nutritionColor;
+}
+
+/**
+ * Get category for action
+ */
+function getActionCategory(actionId: ForgeActionId): 'nutrition' | 'culinaire' {
+  const culinaireActions: ForgeActionId[] = ['fridge_scan', 'recipe_generated', 'meal_plan_generated', 'shopping_list_generated'];
+  return culinaireActions.includes(actionId) ? 'culinaire' : 'nutrition';
+}
+
+/**
  * Hook to award XP for forge actions
  * Automatically tracks actions and awards XP through the gaming system
  */
@@ -29,9 +76,10 @@ export function useForgeXpRewards() {
   const { mutateAsync: markCompleted } = useMarkActionCompleted();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { showNotification } = usePointsNotificationStore();
 
   /**
-   * Award XP for a forge action
+   * Award XP for a forge action with visual notification
    * @param actionId - The forge action identifier
    * @returns The result of the action completion
    */
@@ -45,11 +93,21 @@ export function useForgeXpRewards() {
       });
 
       if (result.was_newly_completed && result.xp_awarded > 0) {
-        showToast(
-          `🎉 +${result.xp_awarded} XP pour ${getActionLabel(actionId)}!`,
-          'success'
-        );
+        showNotification({
+          type: 'forge-action',
+          actionId,
+          actionLabel: getActionLabel(actionId),
+          pointsAwarded: result.xp_awarded,
+          icon: getActionIcon(actionId),
+          color: getActionColor(actionId),
+          category: getActionCategory(actionId),
+        });
       }
+
+      // Force immediate refresh of gaming widget
+      await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
+      await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
 
       return result;
     } catch (error) {
@@ -59,7 +117,7 @@ export function useForgeXpRewards() {
   };
 
   /**
-   * Award XP silently (no toast notification)
+   * Award XP silently (no notification)
    */
   const awardForgeXpSilently = async (actionId: ForgeActionId) => {
     try {
