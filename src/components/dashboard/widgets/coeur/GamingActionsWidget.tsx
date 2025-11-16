@@ -35,7 +35,7 @@ const ACTIONS: ActionButton[] = [
     id: 'meal-scan',
     label: 'Scanner un Repas',
     icon: 'UtensilsCrossed',
-    xp: 10,
+    xp: 25,
     route: '/fridge',
     category: 'daily',
     description: '',

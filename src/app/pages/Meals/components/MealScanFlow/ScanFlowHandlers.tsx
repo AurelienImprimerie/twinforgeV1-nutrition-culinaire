@@ -4,7 +4,6 @@ import { type UserProfileContext, type MealAnalysisRequest } from '../../../../.
 import logger from '../../../../../lib/utils/logger';
 import type { CapturedMealPhoto, ScanFlowState, ScannedProduct, ScannedBarcode } from './ScanFlowState';
 import { openFoodFactsService } from '../../../../../system/services/openFoodFactsService';
-import { useForgeXpRewards } from '../../../../../hooks/useForgeXpRewards';
 
 /**
  * Convert File to Base64 for API transmission
@@ -154,8 +153,6 @@ export function useScanFlowHandlers({
   onAnalysisError: (error: string) => void;
   onSuccess: () => void;
 }) {
-  // Use the XP rewards hook at the component level
-  const { awardForgeXpSilently } = useForgeXpRewards();
 
   // Gérer la capture de photo
   const handlePhotoCapture = React.useCallback(async (
@@ -460,34 +457,75 @@ export function useScanFlowHandlers({
         currentStep: 'results'
       }));
 
-      // Award XP for meal scan
-      try {
-        if (scanFlowState.capturedPhoto) {
-          await awardForgeXpSilently('meal_scan');
-          logger.info('MEAL_SCAN_FLOW', 'XP awarded for meal scan', {
+      // Award XP for meal scan using GamificationService (async IIFE to not block UI)
+      (async () => {
+        try {
+          if (!userId) {
+            logger.warn('MEAL_SCAN_FLOW', 'Cannot award XP: user not authenticated', {
+              clientScanId,
+              timestamp: new Date().toISOString()
+            });
+            return;
+          }
+
+          const { gamificationService } = await import('../../../../../services/dashboard/coeur');
+
+          // Award XP for photo scan if present
+          if (scanFlowState.capturedPhoto) {
+            await gamificationService.awardMealScanXp(userId, {
+              clientScanId,
+              totalCalories: analysisResponse.total_calories,
+              itemsCount: analysisResponse.detected_foods?.length || 0,
+              scanType: 'photo-analysis',
+              timestamp: new Date().toISOString()
+            });
+
+            logger.info('MEAL_SCAN_FLOW', 'XP awarded for meal scan', {
+              clientScanId,
+              xpAwarded: 25,
+              scanType: 'photo-analysis',
+              timestamp: new Date().toISOString()
+            });
+          }
+
+          // Award XP for barcode scans if present
+          if (scanFlowState.scannedProducts.length > 0) {
+            await gamificationService.awardBarcodeScanXp(userId, {
+              clientScanId,
+              productsScanned: scanFlowState.scannedProducts.length,
+              products: scanFlowState.scannedProducts.map(p => ({
+                barcode: p.barcode,
+                name: p.name
+              })),
+              timestamp: new Date().toISOString()
+            });
+
+            logger.info('MEAL_SCAN_FLOW', 'XP awarded for barcode scan', {
+              clientScanId,
+              xpAwarded: 15,
+              productsScanned: scanFlowState.scannedProducts.length,
+              timestamp: new Date().toISOString()
+            });
+          }
+
+          // Force immediate refresh of gaming widget
+          await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+          await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
+          await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+
+          logger.info('MEAL_SCAN_FLOW', 'Gaming widget queries refetched after meal scan', {
             clientScanId,
-            xpAwarded: 25,
             timestamp: new Date().toISOString()
           });
-        }
-
-        if (scanFlowState.scannedProducts.length > 0) {
-          await awardForgeXpSilently('barcode_scan');
-          logger.info('MEAL_SCAN_FLOW', 'XP awarded for barcode scan', {
+        } catch (xpError) {
+          logger.warn('MEAL_SCAN_FLOW', 'Failed to award XP for meal scan', {
+            error: xpError instanceof Error ? xpError.message : 'Unknown error',
             clientScanId,
-            xpAwarded: 15,
-            productsScanned: scanFlowState.scannedProducts.length,
             timestamp: new Date().toISOString()
           });
+          // Don't throw - XP failure should not block user workflow
         }
-
-        // Force immediate refresh of gaming widget
-        await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
-        await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
-        await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
-      } catch (error) {
-        console.error('[MealScan] Failed to award XP:', error);
-      }
+      })();
       
       onSuccess();
 

@@ -404,48 +404,13 @@ const MealScanFlowPage: React.FC = () => {
         timestamp: new Date().toISOString()
       });
 
-      // Award XP for meal scan completion (async IIFE to not block UI)
-      (async () => {
-        try {
-          if (userId) {
-            const { gamificationService } = await import('../../../services/dashboard/coeur');
-            await gamificationService.awardMealScanXp(userId, {
-              mealId: savedMeal.id,
-              scanType: scanFlowState.scanType,
-              totalCalories: totalCalories,
-              itemsCount: hasPhotoAnalysisResults
-                ? scanFlowState.analysisResults.detected_foods?.length
-                : 1,
-              timestamp: new Date().toISOString()
-            });
-
-            logger.info('MEAL_SCAN_SAVE', 'XP awarded for meal scan', {
-              mealId: savedMeal.id,
-              scanType: scanFlowState.scanType,
-              xpAwarded: 25,
-              timestamp: new Date().toISOString()
-            });
-
-            // Force refetch gamification queries to refresh gaming widget immediately
-            await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
-            await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
-            await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
-
-            logger.info('MEAL_SCAN_SAVE', 'Gaming widget queries refetched after meal scan', {
-              mealId: savedMeal.id,
-              scanType: scanFlowState.scanType,
-              xpAwarded: 25,
-              timestamp: new Date().toISOString()
-            });
-          }
-        } catch (xpError) {
-          logger.warn('MEAL_SCAN_SAVE', 'Failed to award XP for meal scan', {
-            error: xpError instanceof Error ? xpError.message : 'Unknown error',
-            mealId: savedMeal.id,
-            timestamp: new Date().toISOString()
-          });
-        }
-      })();
+      // CORRECTION: XP already awarded after analysis in ScanFlowHandlers
+      // No need to award again here to prevent double attribution
+      logger.info('MEAL_SCAN_SAVE', 'XP was already awarded after analysis, skipping double attribution', {
+        mealId: savedMeal.id,
+        scanType: scanFlowState.scanType,
+        timestamp: new Date().toISOString()
+      });
 
       // CRITIQUE: Ne pas naviguer ici si on est dans un contexte d'exit modal
       // La navigation sera gérée par handleSaveAndExit
