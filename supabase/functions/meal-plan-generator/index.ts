@@ -495,8 +495,8 @@ Deno.serve(async (req) => {
       batch_cooking_enabled: requestData.batch_cooking_enabled,
       version: 'meal_plan_v1'
     };
-    const encoder = new TextEncoder();
-    const cacheKeyBuffer = encoder.encode(JSON.stringify(cacheKeyData));
+    const cacheKeyEncoder = new TextEncoder();
+    const cacheKeyBuffer = cacheKeyEncoder.encode(JSON.stringify(cacheKeyData));
     const cacheKeyHash = await crypto.subtle.digest('SHA-256', cacheKeyBuffer);
     const cacheKey = Array.from(new Uint8Array(cacheKeyHash))
       .map(b => b.toString(16).padStart(2, '0'))
