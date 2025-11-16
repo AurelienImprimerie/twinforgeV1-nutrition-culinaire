@@ -350,6 +350,13 @@ export const generateMealPlanCore = async (
           await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
           await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
           await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+
+          logger.info('MEAL_PLAN_STORE', 'Gaming widget queries refetched after meal plan generation', {
+            weekNumber,
+            planId: mealPlanData.id,
+            xpAwarded: 35,
+            timestamp: new Date().toISOString()
+          });
         }
       } catch (xpError) {
         logger.warn('MEAL_PLAN_STORE', 'Failed to award XP for meal plan generation', {

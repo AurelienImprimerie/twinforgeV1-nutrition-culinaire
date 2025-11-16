@@ -486,9 +486,15 @@ export const useShoppingListGenerationPipeline = create<ShoppingListGenerationPi
 
           // Force immediate refresh of gaming widget
           const { queryClient } = await import('../../../app/providers/AppProviders');
-          await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-          await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
-          await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+          await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+          await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
+          await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+
+          logger.info('SHOPPING_LIST_PIPELINE', 'Gaming widget queries refetched after shopping list generation', {
+            sessionId: currentSessionId,
+            xpAwarded: xpResult.xpAwarded,
+            timestamp: new Date().toISOString()
+          });
         } catch (error) {
           logger.warn('SHOPPING_LIST_PIPELINE', 'Failed to award XP for shopping list generation', {
             error: error instanceof Error ? error.message : 'Unknown error',

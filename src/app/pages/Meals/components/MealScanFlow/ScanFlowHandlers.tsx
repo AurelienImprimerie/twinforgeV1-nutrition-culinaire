@@ -482,9 +482,9 @@ export function useScanFlowHandlers({
         }
 
         // Force immediate refresh of gaming widget
-        await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-        await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
-        await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+        await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+        await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
+        await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
       } catch (error) {
         console.error('[MealScan] Failed to award XP:', error);
       }

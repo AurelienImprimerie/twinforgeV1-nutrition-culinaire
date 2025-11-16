@@ -310,6 +310,12 @@ export const useShoppingListStore = create<ShoppingListState>()(
                 await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
                 await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
                 await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+
+                logger.info('SHOPPING_LIST_STORE', 'Gaming widget queries refetched after shopping list generation', {
+                  mealPlanId: selectedMealPlanId,
+                  xpAwarded: 15,
+                  timestamp: new Date().toISOString()
+                });
               }
             } catch (xpError) {
               logger.warn('SHOPPING_LIST_STORE', 'Failed to award XP for shopping list generation', {

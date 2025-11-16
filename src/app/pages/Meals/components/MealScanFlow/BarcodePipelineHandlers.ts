@@ -178,6 +178,13 @@ export function useBarcodePipelineHandlers({
             await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
             await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
             await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+
+            logger.info('BARCODE_PIPELINE', 'Gaming widget queries refetched after barcode scan', {
+              clientScanId,
+              barcode: barcodeItem.barcode,
+              xpAwarded: 15,
+              timestamp: new Date().toISOString()
+            });
           }
         } catch (xpError) {
           logger.warn('BARCODE_PIPELINE', 'Failed to award XP for barcode scan', {

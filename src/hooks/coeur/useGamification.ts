@@ -220,14 +220,14 @@ export function useUpdateWeight() {
       }
 
       // Invalidate React Query caches
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
       queryClient.invalidateQueries({ queryKey: ['weight-update-history'] });
       queryClient.invalidateQueries({ queryKey: ['xp-stats'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['body-scan'] });
-      queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
-      queryClient.invalidateQueries({ queryKey: ['weekly-actions-availability'] });
+      queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['weekly-actions-availability'], type: 'active' });
 
       // CRITICAL: Manually refresh userStore profile to sync with database
       const { useUserStore } = await import('@/system/store/userStore');
@@ -248,8 +248,8 @@ export function useAwardMealScanXp() {
       return gamificationService.awardMealScanXp(session.user.id, mealData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
     }
   });
 }
@@ -265,8 +265,8 @@ export function useAwardCalorieGoalMetXp() {
       return gamificationService.awardCalorieGoalMetXp(session.user.id, calorieData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
     }
   });
 }
@@ -282,8 +282,8 @@ export function useAwardTrainingSessionXp() {
       return gamificationService.awardTrainingSessionXp(session.user.id, sessionData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
     }
   });
 }
@@ -312,10 +312,10 @@ export function useAwardBodyScanXp() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
-      queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
-      queryClient.invalidateQueries({ queryKey: ['weekly-actions-availability'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['weekly-actions-availability'], type: 'active' });
     }
   });
 }
@@ -331,8 +331,8 @@ export function useAwardFastingProtocolXp() {
       return gamificationService.awardFastingProtocolXp(session.user.id, fastingData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
     }
   });
 }
@@ -348,8 +348,8 @@ export function useAwardWearableSyncXp() {
       return gamificationService.awardWearableSyncXp(session.user.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
     }
   });
 }
@@ -385,9 +385,9 @@ export function useAwardActivityXp() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['xp-events'] });
-      queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+      queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
     }
   });
 }

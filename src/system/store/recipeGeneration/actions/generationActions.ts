@@ -392,9 +392,14 @@ export const createGenerationActions = (
 
                   // Force immediate refresh of gaming widget
                   const { queryClient } = await import('../../../../app/providers/AppProviders');
-                  await queryClient.invalidateQueries({ queryKey: ['gamification-progress'] });
-                  await queryClient.invalidateQueries({ queryKey: ['xp-events'] });
-                  await queryClient.invalidateQueries({ queryKey: ['daily-actions'] });
+                  await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
+                  await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
+                  await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+
+                  logger.info('RECIPE_GENERATION_PIPELINE', 'Gaming widget queries refetched after recipe generation', {
+                    xpAwarded: xpResult.xpAwarded,
+                    timestamp: new Date().toISOString()
+                  });
                 }
               } catch (error) {
                 logger.warn('RECIPE_GENERATION_PIPELINE', 'Failed to award XP for recipe generation', {
