@@ -1,0 +1,293 @@
+/**
+ * ================================================================
+ * RECORDS TAB Z-INDEX FIX
+ * Correction spécifique pour l'onglet Records en mode high-performance
+ *
+ * Problème: Deux barres décoratives apparaissent au-dessus du contenu
+ * Solution: Augmenter le z-index de tous les composants de contenu
+ * ================================================================
+ */
+
+/*
+ * Z-INDEX HIERARCHY FOR RECORDS TAB:
+ * - Page Header: 100
+ * - Tabs Component: 90
+ * - Records Widget (main container): 50
+ * - Gaming Actions (Forges Suivi Quotidien): 40
+ * - Nutrition Actions (Forges Culinaires): 40
+ * - Training Live (Forge Corporelle): 40
+ * - Body Scan (Forge Corporelle 3D): 40
+ * - Section titles and subtitles: 45
+ * - CTA Buttons: inherit (already working)
+ */
+
+/* ================================================================
+   1. PAGE HEADER - Must be above everything
+   ================================================================ */
+.performance-mode header[role="banner"],
+.performance-mode .page-header,
+.high-performance-mode header[role="banner"],
+.high-performance-mode .page-header {
+  position: relative;
+  z-index: 100;
+  isolation: isolate;
+}
+
+/* ================================================================
+   2. TABS COMPONENT - Second highest priority
+   ================================================================ */
+/* Tabs container on Records tab */
+.performance-mode .tabs-list-container,
+.high-performance-mode .tabs-list-container {
+  position: relative;
+  z-index: 90;
+  isolation: isolate;
+}
+
+/* Tabs list */
+.performance-mode .tabs-list,
+.high-performance-mode .tabs-list {
+  position: relative;
+  z-index: 91;
+}
+
+/* Individual tab triggers */
+.performance-mode .tabs-trigger,
+.high-performance-mode .tabs-trigger {
+  position: relative;
+  z-index: 92;
+}
+
+/* Tabs scroll indicators */
+.performance-mode .tabs-scroll-indicators,
+.high-performance-mode .tabs-scroll-indicators {
+  position: relative;
+  z-index: 93;
+}
+
+/* ================================================================
+   3. RECORDS WIDGET - Main container
+   ================================================================ */
+/* RecordsWidgetSimplified main container */
+.performance-mode .glass-card-premium,
+.high-performance-mode .glass-card-premium {
+  position: relative;
+  z-index: 50;
+  isolation: isolate;
+}
+
+/* Records Widget inner content */
+.performance-mode .glass-card-premium > .space-y-6,
+.high-performance-mode .glass-card-premium > .space-y-6 {
+  position: relative;
+  z-index: 51;
+}
+
+/* Records Widget titles and headers */
+.performance-mode .glass-card-premium h3,
+.performance-mode .glass-card-premium .text-xl,
+.performance-mode .glass-card-premium .text-2xl,
+.high-performance-mode .glass-card-premium h3,
+.high-performance-mode .glass-card-premium .text-xl,
+.high-performance-mode .glass-card-premium .text-2xl {
+  position: relative;
+  z-index: 52;
+}
+
+/* Records Widget subtitles */
+.performance-mode .glass-card-premium p,
+.performance-mode .glass-card-premium .text-sm,
+.high-performance-mode .glass-card-premium p,
+.high-performance-mode .glass-card-premium .text-sm {
+  position: relative;
+  z-index: 52;
+}
+
+/* ================================================================
+   4. ALL SECTION WIDGETS - Universal approach for all sections
+   ================================================================ */
+/* All section containers in Records tab */
+.performance-mode [role="tabpanel"][id="panel-records"] .space-y-6 > div,
+.high-performance-mode [role="tabpanel"][id="panel-records"] .space-y-6 > div {
+  position: relative;
+  z-index: 40;
+  isolation: isolate;
+}
+
+/* All section headers in Records tab */
+.performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 .px-2,
+.high-performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 .px-2 {
+  position: relative;
+  z-index: 45;
+}
+
+/* Section titles (h3 elements) */
+.performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 h3,
+.performance-mode [role="tabpanel"][id="panel-records"] h3,
+.high-performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 h3,
+.high-performance-mode [role="tabpanel"][id="panel-records"] h3 {
+  position: relative;
+  z-index: 46;
+}
+
+/* Section subtitles (p elements after h3) */
+.performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 h3 + p,
+.performance-mode [role="tabpanel"][id="panel-records"] h3 + p,
+.high-performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 h3 + p,
+.high-performance-mode [role="tabpanel"][id="panel-records"] h3 + p {
+  position: relative;
+  z-index: 46;
+}
+
+/* ================================================================
+   5. SECTION CONTAINERS - Individual spacing wrappers
+   ================================================================ */
+/* Gaming Actions, Nutrition Actions, Training Live, Body Scan containers */
+.performance-mode [role="tabpanel"][id="panel-records"] .space-y-4,
+.high-performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 {
+  position: relative;
+  z-index: 40;
+  isolation: isolate;
+}
+
+/* All button elements in sections */
+.performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 button,
+.high-performance-mode [role="tabpanel"][id="panel-records"] .space-y-4 button {
+  position: relative;
+  z-index: 41;
+}
+
+/* ================================================================
+   8. CTA BUTTONS - Already working, ensure they stay on top
+   ================================================================ */
+/* Glass card buttons (CTA actions) */
+.performance-mode .glass-card button,
+.performance-mode button.glass-card,
+.high-performance-mode .glass-card button,
+.high-performance-mode button.glass-card {
+  position: relative;
+  z-index: 60;
+}
+
+/* Grid of action buttons */
+.performance-mode .grid button,
+.high-performance-mode .grid button {
+  position: relative;
+  z-index: 60;
+}
+
+/* ================================================================
+   9. GENERAL CONTENT PROTECTION
+   ================================================================ */
+/* Ensure all direct children of Records tab panel have proper z-index */
+.performance-mode [aria-labelledby="tab-records"] > .space-y-6 > *,
+.high-performance-mode [aria-labelledby="tab-records"] > .space-y-6 > * {
+  position: relative;
+  z-index: 35;
+}
+
+/* Ensure all text content is above background elements */
+.performance-mode [aria-labelledby="tab-records"] h1,
+.performance-mode [aria-labelledby="tab-records"] h2,
+.performance-mode [aria-labelledby="tab-records"] h3,
+.performance-mode [aria-labelledby="tab-records"] h4,
+.performance-mode [aria-labelledby="tab-records"] p,
+.high-performance-mode [aria-labelledby="tab-records"] h1,
+.high-performance-mode [aria-labelledby="tab-records"] h2,
+.high-performance-mode [aria-labelledby="tab-records"] h3,
+.high-performance-mode [aria-labelledby="tab-records"] h4,
+.high-performance-mode [aria-labelledby="tab-records"] p {
+  position: relative;
+  z-index: 45;
+}
+
+/* ================================================================
+   10. MOBILE SPECIFIC ADJUSTMENTS
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Ensure mobile bottom bar doesn't interfere */
+  .performance-mode .new-mobile-bottom-bar,
+  .high-performance-mode .new-mobile-bottom-bar {
+    z-index: 9996;
+  }
+
+  /* Mobile tabs need slightly higher z-index */
+  .performance-mode .tabs-list-container,
+  .high-performance-mode .tabs-list-container {
+    z-index: 95;
+  }
+}
+
+/* ================================================================
+   11. DESKTOP SPECIFIC ADJUSTMENTS
+   ================================================================ */
+@media (min-width: 769px) {
+  /* Desktop sidebar shouldn't interfere with Records content */
+  .performance-mode .sidebar,
+  .high-performance-mode .sidebar {
+    z-index: 9997;
+  }
+}
+
+/* ================================================================
+   12. FALLBACK - Ensure no background pseudo-elements interfere
+   ================================================================ */
+/* Disable problematic pseudo-elements in high-performance mode on Records tab */
+.high-performance-mode [aria-labelledby="tab-records"]::before,
+.high-performance-mode [aria-labelledby="tab-records"]::after {
+  z-index: -1 !important;
+}
+
+.high-performance-mode [aria-labelledby="tab-records"] *::before,
+.high-performance-mode [aria-labelledby="tab-records"] *::after {
+  z-index: inherit;
+}
+
+/* Ensure glass card background elements don't create stacking issues */
+.high-performance-mode [aria-labelledby="tab-records"] .glass-card::before,
+.high-performance-mode [aria-labelledby="tab-records"] .glass-card::after,
+.high-performance-mode [aria-labelledby="tab-records"] .glass-card-premium::before,
+.high-performance-mode [aria-labelledby="tab-records"] .glass-card-premium::after {
+  z-index: -1 !important;
+}
+
+/* ================================================================
+   13. REMOVE BLACK SHADOW/GLOW EFFECTS FROM RECORDS COMPONENT
+   User requested removal of square black borders above component
+   ================================================================ */
+/* Disable all pseudo-elements that create black shadows/glows */
+[role="tabpanel"][id="panel-records"] .glass-card-premium::before,
+[role="tabpanel"][id="panel-records"] .glass-card-premium::after,
+[aria-labelledby="tab-records"] .glass-card-premium::before,
+[aria-labelledby="tab-records"] .glass-card-premium::after {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Remove any box-shadow that might create black glows */
+[role="tabpanel"][id="panel-records"] .glass-card-premium,
+[aria-labelledby="tab-records"] .glass-card-premium {
+  box-shadow: none !important;
+}
+
+/* Apply only minimal, non-black shadow if needed for depth */
+[role="tabpanel"][id="panel-records"] .glass-card-premium,
+[aria-labelledby="tab-records"] .glass-card-premium {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ================================================================
+   14. REMOVE TABS GRADIENT BORDER AND GLOW EFFECTS
+   Disable ::before (gradient border) and ::after (ambient glow)
+   that create black bands on left/right sides
+   ================================================================ */
+/* Disable tabs container pseudo-elements that create the black bands */
+[role="tabpanel"][id="panel-records"] .tabs-list-container::before,
+[role="tabpanel"][id="panel-records"] .tabs-list-container::after,
+[aria-labelledby="tab-records"] .tabs-list-container::before,
+[aria-labelledby="tab-records"] .tabs-list-container::after {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}

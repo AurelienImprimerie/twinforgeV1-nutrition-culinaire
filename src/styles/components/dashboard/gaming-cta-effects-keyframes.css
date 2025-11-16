@@ -1,0 +1,397 @@
+/**
+ * Gaming CTA Effects - Keyframes
+ * Animations optimisées pour mobile avec variations par mode de performance
+ */
+
+/* ============================================================================
+   PULSE ANIMATIONS - Attirer l'attention
+   ============================================================================ */
+
+@keyframes gaming-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px var(--action-color, #F7931E),
+                0 0 20px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+                inset 0 0 10px var(--action-color-alpha-10, rgba(247, 147, 30, 0.1));
+  }
+  50% {
+    box-shadow: 0 0 20px var(--action-color, #F7931E),
+                0 0 40px var(--action-color-alpha-50, rgba(247, 147, 30, 0.5)),
+                inset 0 0 20px var(--action-color-alpha-20, rgba(247, 147, 30, 0.2));
+  }
+}
+
+@keyframes gaming-pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes gaming-pulse-border {
+  0%, 100% {
+    border-color: var(--action-color-alpha-30, rgba(247, 147, 30, 0.3));
+  }
+  50% {
+    border-color: var(--action-color-alpha-60, rgba(247, 147, 30, 0.6));
+  }
+}
+
+/* ============================================================================
+   SHIMMER ANIMATIONS - Effet de brillance traversant
+   ============================================================================ */
+
+@keyframes gaming-shimmer-sweep {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(250%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gaming-shimmer-glow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ============================================================================
+   PARTICLE ANIMATIONS - Particules flottantes
+   ============================================================================ */
+
+@keyframes gaming-particle-float-1 {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-10px, -30px) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gaming-particle-float-2 {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, -30px) rotate(-180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gaming-particle-float-3 {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, -35px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   ICON ANIMATIONS - Animation des icônes
+   ============================================================================ */
+
+@keyframes gaming-icon-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.05);
+  }
+}
+
+@keyframes gaming-icon-rotate-subtle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes gaming-icon-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px var(--action-color, #F7931E));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px var(--action-color, #F7931E))
+            drop-shadow(0 0 12px var(--action-color-alpha-50, rgba(247, 147, 30, 0.5)));
+  }
+}
+
+/* ============================================================================
+   BADGE ANIMATIONS - Badges de points
+   ============================================================================ */
+
+@keyframes gaming-badge-shine {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gaming-badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+}
+
+/* ============================================================================
+   RIPPLE ANIMATIONS - Ondulations au clic
+   ============================================================================ */
+
+@keyframes gaming-ripple-expand {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes gaming-ripple-wave {
+  0% {
+    box-shadow: 0 0 0 0 var(--action-color-alpha-60, rgba(247, 147, 30, 0.6)),
+                0 0 0 0 var(--action-color-alpha-40, rgba(247, 147, 30, 0.4));
+  }
+  40% {
+    box-shadow: 0 0 0 8px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+                0 0 0 16px var(--action-color-alpha-15, rgba(247, 147, 30, 0.15));
+  }
+  100% {
+    box-shadow: 0 0 0 8px var(--action-color-alpha-0, rgba(247, 147, 30, 0)),
+                0 0 0 16px var(--action-color-alpha-0, rgba(247, 147, 30, 0));
+  }
+}
+
+/* ============================================================================
+   PRIORITY ANIMATIONS - Actions prioritaires
+   ============================================================================ */
+
+@keyframes gaming-priority-attention {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--action-color-alpha-60, rgba(247, 147, 30, 0.6));
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 8px var(--action-color-alpha-0, rgba(247, 147, 30, 0));
+  }
+}
+
+@keyframes gaming-priority-glow-intense {
+  0%, 100% {
+    box-shadow:
+      0 4px 16px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+      0 2px 8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 6px 24px var(--action-color-alpha-50, rgba(247, 147, 30, 0.5)),
+      0 3px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 30px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3));
+  }
+}
+
+/* ============================================================================
+   SPARK ANIMATIONS - Étincelles
+   ============================================================================ */
+
+@keyframes gaming-spark-burst {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gaming-spark-trail {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-20px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   HOVER ANIMATIONS - États de survol
+   ============================================================================ */
+
+@keyframes gaming-hover-lift {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes gaming-hover-glow-expand {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================================================
+   COMPLETION ANIMATIONS - Feedback de complétion
+   ============================================================================ */
+
+@keyframes gaming-completion-check {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes gaming-completion-burst {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   AVAILABILITY ANIMATIONS - Disponibilité hebdomadaire
+   ============================================================================ */
+
+@keyframes gaming-available-highlight {
+  0%, 100% {
+    border-color: var(--action-color-alpha-40, rgba(247, 147, 30, 0.4));
+    background-position: 0% 50%;
+  }
+  50% {
+    border-color: var(--action-color-alpha-70, rgba(247, 147, 30, 0.7));
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gaming-available-pulse-ring {
+  0% {
+    box-shadow:
+      0 0 0 0 var(--action-color-alpha-60, rgba(247, 147, 30, 0.6)),
+      0 0 0 0 var(--action-color-alpha-40, rgba(247, 147, 30, 0.4)),
+      0 4px 16px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3));
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px var(--action-color-alpha-20, rgba(247, 147, 30, 0.2)),
+      0 0 0 12px var(--action-color-alpha-10, rgba(247, 147, 30, 0.1)),
+      0 4px 16px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3));
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 var(--action-color-alpha-0, rgba(247, 147, 30, 0)),
+      0 0 0 0 var(--action-color-alpha-0, rgba(247, 147, 30, 0)),
+      0 4px 16px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3));
+  }
+}
+
+/* ============================================================================
+   MOBILE OPTIMIZATIONS - Optimisations mobiles
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Optimisation pour petits écrans */
+@media (max-width: 640px) {
+  @keyframes gaming-pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 8px var(--action-color, #F7931E),
+                  0 0 16px var(--action-color-alpha-25, rgba(247, 147, 30, 0.25));
+    }
+    50% {
+      box-shadow: 0 0 12px var(--action-color, #F7931E),
+                  0 0 24px var(--action-color-alpha-40, rgba(247, 147, 30, 0.4));
+    }
+  }
+}

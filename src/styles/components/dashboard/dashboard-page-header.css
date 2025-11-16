@@ -1,0 +1,344 @@
+/**
+ * Dashboard PageHeader Styles - Performance Optimizations
+ * Styles complémentaires pour les trois variantes de PageHeader
+ * Optimisés pour les 3 modes de performance
+ */
+
+/* =========================================
+   Z-INDEX FIX FOR GUIDE BUTTON
+   ========================================= */
+
+/* Ensure guide button is always clickable in dashboard header */
+.page-header[role="banner"] {
+  position: relative;
+  z-index: 3010;
+  isolation: isolate;
+}
+
+/* Guide button wrapper must be on top */
+.page-header[role="banner"] > div > .flex-shrink-0:last-child,
+.page-header[role="banner"] .flex-shrink-0:has(button) {
+  position: relative;
+  z-index: 3020;
+  isolation: isolate;
+}
+
+/* Guide button itself */
+.page-header[role="banner"] button {
+  position: relative;
+  z-index: 3021 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+}
+
+/* Disable pointer events on all pseudo-elements in header to prevent blocking */
+.page-header[role="banner"]::before,
+.page-header[role="banner"]::after,
+.page-header[role="banner"] *::before,
+.page-header[role="banner"] *::after {
+  pointer-events: none !important;
+}
+
+/* Re-enable pointer events for actual interactive elements */
+.page-header[role="banner"] button,
+.page-header[role="banner"] a,
+.page-header[role="banner"] input,
+.page-header[role="banner"] select,
+.page-header[role="banner"] textarea {
+  pointer-events: auto !important;
+}
+
+/* =========================================
+   SCROLLBAR UTILITIES
+   ========================================= */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================
+   PERFORMANCE MODE OPTIMIZATIONS
+   ========================================= */
+
+/* Mode Performance: Désactiver toutes les animations et effets coûteux */
+[data-performance-mode="performance"] .dashboard-page-header {
+  animation: none !important;
+  transition: none !important;
+}
+
+[data-performance-mode="performance"] .dashboard-page-header * {
+  animation: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Mode Balanced: Réduire la complexité des effets */
+[data-performance-mode="balanced"] .dashboard-page-header {
+  will-change: auto;
+}
+
+[data-performance-mode="balanced"] .dashboard-page-header * {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Mode Premium: Tous les effets activés */
+[data-performance-mode="premium"] .dashboard-page-header {
+  will-change: transform, opacity;
+}
+
+/* =========================================
+   RESPONSIVE OPTIMIZATIONS
+   ========================================= */
+
+/* Mobile: Réduire encore plus les espacements */
+@media (max-width: 640px) {
+  .dashboard-page-header {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Tablet: Espacements intermédiaires */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .dashboard-page-header {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Desktop: Espacements standards optimisés */
+@media (min-width: 1025px) {
+  .dashboard-page-header {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* =========================================
+   TRUNCATE UTILITIES
+   ========================================= */
+
+.truncate-custom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  min-width: 0;
+}
+
+/* =========================================
+   GLASS EFFECTS - DASHBOARD SPECIFIC
+   ========================================= */
+
+.dashboard-glass-surface {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dashboard-glass-surface-light {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* =========================================
+   ICON GLOW EFFECTS
+   ========================================= */
+
+.icon-glow-orange {
+  filter: drop-shadow(0 0 16px rgba(247, 147, 30, 0.7));
+}
+
+.icon-glow-red {
+  filter: drop-shadow(0 0 16px rgba(249, 115, 22, 0.7));
+}
+
+.icon-glow-pink {
+  filter: drop-shadow(0 0 16px rgba(236, 72, 153, 0.7));
+}
+
+.icon-glow-purple {
+  filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.7));
+}
+
+/* Performance mode: Désactiver les glows */
+[data-performance-mode="performance"] .icon-glow-orange,
+[data-performance-mode="performance"] .icon-glow-red,
+[data-performance-mode="performance"] .icon-glow-pink,
+[data-performance-mode="performance"] .icon-glow-purple {
+  filter: none !important;
+}
+
+/* =========================================
+   BADGE ANIMATIONS
+   ========================================= */
+
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.badge-live {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+[data-performance-mode="performance"] .badge-live {
+  animation: none;
+}
+
+/* =========================================
+   PROGRESS BAR ANIMATIONS
+   ========================================= */
+
+@keyframes progress-shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.progress-bar-shimmer {
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s linear infinite;
+}
+
+[data-performance-mode="performance"] .progress-bar-shimmer {
+  animation: none;
+  background-size: 100% 100%;
+}
+
+/* =========================================
+   TEXT SHADOW UTILITIES - DASHBOARD
+   ========================================= */
+
+.text-shadow-glow-orange {
+  text-shadow:
+    0 0 24px rgba(247, 147, 30, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-glow-red {
+  text-shadow:
+    0 0 24px rgba(249, 115, 22, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-glow-pink {
+  text-shadow:
+    0 0 24px rgba(236, 72, 153, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-glow-purple {
+  text-shadow:
+    0 0 24px rgba(139, 92, 246, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+[data-performance-mode="performance"] .text-shadow-glow-orange,
+[data-performance-mode="performance"] .text-shadow-glow-red,
+[data-performance-mode="performance"] .text-shadow-glow-pink,
+[data-performance-mode="performance"] .text-shadow-glow-purple {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* =========================================
+   TRANSITION OPTIMIZATIONS
+   ========================================= */
+
+.transition-dashboard {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.transition-dashboard-fast {
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-performance-mode="performance"] .transition-dashboard,
+[data-performance-mode="performance"] .transition-dashboard-fast {
+  transition: none;
+}
+
+/* =========================================
+   ACCESSIBILITY - HIGH CONTRAST
+   ========================================= */
+
+@media (prefers-contrast: high) {
+  .dashboard-glass-surface {
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .text-shadow-glow-orange,
+  .text-shadow-glow-red,
+  .text-shadow-glow-pink,
+  .text-shadow-glow-purple {
+    text-shadow: none;
+  }
+}
+
+/* =========================================
+   REDUCED MOTION
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page-header * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .badge-live {
+    animation: none;
+  }
+
+  .progress-bar-shimmer {
+    animation: none;
+  }
+}
+
+/* =========================================
+   PRINT STYLES
+   ========================================= */
+
+@media print {
+  .dashboard-page-header {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
+  .dashboard-page-header * {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
+}

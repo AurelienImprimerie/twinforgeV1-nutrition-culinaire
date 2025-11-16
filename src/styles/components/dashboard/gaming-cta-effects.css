@@ -1,0 +1,521 @@
+/**
+ * Gaming CTA Effects - Main Styles
+ * Effets visuels dynamiques pour les boutons CTA gaming
+ * Optimisés pour mobile avec 3 modes de performance
+ */
+
+@import './gaming-cta-effects-keyframes.css';
+
+/* ============================================================================
+   BASE CTA STYLES
+   ============================================================================ */
+
+.gaming-cta-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Override inline box-shadow to allow animations */
+.gaming-cta-priority,
+.gaming-cta-weekly-available,
+.gaming-cta-secondary {
+  box-shadow:
+    0 4px 16px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ============================================================================
+   PRIORITY DAILY ACTIONS - Actions prioritaires quotidiennes
+   ============================================================================ */
+
+.gaming-cta-priority {
+  position: relative;
+  /* FORCE ANIMATION SANS data-performance-mode */
+  animation: gaming-priority-glow-intense 1s ease-in-out infinite !important;
+}
+
+.gaming-cta-priority .gaming-cta-icon {
+  animation: gaming-icon-bounce 0.8s ease-in-out infinite !important;
+}
+
+/* Mode Premium - Tous les effets */
+[data-performance-mode="premium"] .gaming-cta-priority {
+  animation: gaming-priority-glow-intense 1s ease-in-out infinite !important;
+}
+
+/* Mode Standard - Effets réduits */
+[data-performance-mode="standard"] .gaming-cta-priority {
+  animation: gaming-priority-glow-intense 1.5s ease-in-out infinite !important;
+}
+
+/* Mode Low - Effets minimaux */
+[data-performance-mode="low"] .gaming-cta-priority {
+  animation: none !important;
+  border: 2px solid var(--action-color-alpha-50, rgba(247, 147, 30, 0.5)) !important;
+}
+
+/* ============================================================================
+   SHIMMER EFFECT - Effet de brillance
+   ============================================================================ */
+
+.gaming-cta-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+[data-performance-mode="premium"] .gaming-cta-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent
+  );
+  animation: gaming-shimmer-sweep 4s ease-in-out infinite;
+  transform: skewX(-25deg);
+}
+
+[data-performance-mode="standard"] .gaming-cta-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent
+  );
+  animation: gaming-shimmer-sweep 5s ease-in-out infinite;
+  transform: skewX(-25deg);
+}
+
+/* ============================================================================
+   PARTICLES CONTAINER - Particules flottantes
+   ============================================================================ */
+
+.gaming-cta-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+[data-performance-mode="premium"] .gaming-cta-particles::before,
+[data-performance-mode="premium"] .gaming-cta-particles::after {
+  content: '✦';
+  position: absolute;
+  font-size: 8px;
+  color: var(--action-color, #F7931E);
+  opacity: 0;
+  bottom: 20%;
+  left: 50%;
+  filter: blur(0.5px);
+}
+
+[data-performance-mode="premium"] .gaming-cta-particles::before {
+  animation: gaming-particle-float-1 3s ease-in-out infinite;
+  left: 30%;
+}
+
+[data-performance-mode="premium"] .gaming-cta-particles::after {
+  animation: gaming-particle-float-2 3.5s ease-in-out infinite 0.5s;
+  left: 70%;
+}
+
+/* ============================================================================
+   ICON CONTAINER - Animation des icônes
+   ============================================================================ */
+
+.gaming-cta-icon {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-performance-mode="premium"] .gaming-cta-priority .gaming-cta-icon {
+  animation: gaming-icon-bounce 2s ease-in-out infinite;
+}
+
+[data-performance-mode="standard"] .gaming-cta-priority .gaming-cta-icon {
+  animation: gaming-icon-bounce 3s ease-in-out infinite;
+}
+
+.gaming-cta-button:hover .gaming-cta-icon {
+  transform: scale(1.1);
+}
+
+[data-performance-mode="premium"] .gaming-cta-button:hover .gaming-cta-icon {
+  animation: gaming-icon-rotate-subtle 0.6s ease-in-out;
+}
+
+/* Glow sur l'icône */
+[data-performance-mode="premium"] .gaming-cta-icon::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(
+    circle,
+    var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+    transparent 70%
+  );
+  border-radius: inherit;
+  opacity: 0;
+  animation: gaming-icon-glow-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   BADGE STYLES - Badges de points
+   ============================================================================ */
+
+.gaming-cta-badge {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+[data-performance-mode="premium"] .gaming-cta-badge {
+  animation: gaming-badge-pulse 2s ease-in-out infinite;
+}
+
+[data-performance-mode="premium"] .gaming-cta-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: gaming-badge-shine 3s ease-in-out infinite;
+}
+
+.gaming-cta-button:hover .gaming-cta-badge {
+  transform: scale(1.05);
+}
+
+/* ============================================================================
+   HOVER STATES - États de survol
+   ============================================================================ */
+
+.gaming-cta-button:hover {
+  transform: translateY(-2px);
+}
+
+[data-performance-mode="premium"] .gaming-cta-button:hover {
+  box-shadow:
+    0 8px 24px var(--action-color-alpha-40, rgba(247, 147, 30, 0.4)),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+[data-performance-mode="standard"] .gaming-cta-button:hover {
+  box-shadow:
+    0 6px 18px var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+    0 3px 9px rgba(0, 0, 0, 0.4);
+}
+
+/* Overlay glow on hover */
+.gaming-cta-hover-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.gaming-cta-button:hover .gaming-cta-hover-glow {
+  opacity: 1;
+}
+
+/* ============================================================================
+   ACTIVE/TAP STATES - États actifs
+   ============================================================================ */
+
+.gaming-cta-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Ripple effect on click */
+.gaming-cta-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--action-color-alpha-30, rgba(247, 147, 30, 0.3));
+  pointer-events: none;
+  animation: gaming-ripple-expand 0.6s ease-out;
+}
+
+/* ============================================================================
+   COMPLETION STATES - États de complétion
+   ============================================================================ */
+
+.gaming-cta-completed {
+  position: relative;
+}
+
+.gaming-cta-completed::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--action-color, #F7931E);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px var(--action-color-alpha-40, rgba(247, 147, 30, 0.4));
+  animation: gaming-completion-check 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Badge occurrence */
+.gaming-cta-occurrence {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 10;
+}
+
+[data-performance-mode="premium"] .gaming-cta-occurrence {
+  animation: gaming-badge-pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================================
+   WEEKLY ACTIONS - Actions hebdomadaires disponibles
+   ============================================================================ */
+
+.gaming-cta-weekly-available {
+  position: relative;
+}
+
+[data-performance-mode="premium"] .gaming-cta-weekly-available {
+  animation: gaming-available-pulse-ring 2s ease-in-out infinite;
+}
+
+[data-performance-mode="standard"] .gaming-cta-weekly-available {
+  animation: gaming-available-highlight 3s ease-in-out infinite;
+}
+
+[data-performance-mode="premium"] .gaming-cta-weekly-available::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background: linear-gradient(
+    45deg,
+    var(--action-color-alpha-0, rgba(247, 147, 30, 0)),
+    var(--action-color-alpha-30, rgba(247, 147, 30, 0.3)),
+    var(--action-color-alpha-0, rgba(247, 147, 30, 0))
+  );
+  background-size: 200% 200%;
+  border-radius: inherit;
+  animation: gaming-shimmer-glow 2s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ============================================================================
+   SECONDARY ACTIONS - Actions secondaires (Forges)
+   ============================================================================ */
+
+.gaming-cta-secondary {
+  position: relative;
+}
+
+[data-performance-mode="premium"] .gaming-cta-secondary:hover {
+  animation: gaming-hover-lift 0.3s ease forwards;
+}
+
+/* Subtle glow for secondary actions */
+[data-performance-mode="premium"] .gaming-cta-secondary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--action-color-alpha-10, rgba(247, 147, 30, 0.1)),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+[data-performance-mode="premium"] .gaming-cta-secondary:hover::after {
+  opacity: 1;
+  animation: gaming-hover-glow-expand 0.4s ease forwards;
+}
+
+/* ============================================================================
+   SPARK EFFECTS - Étincelles pour les actions importantes
+   ============================================================================ */
+
+.gaming-cta-spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--action-color, #F7931E);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+[data-performance-mode="premium"] .gaming-cta-priority .gaming-cta-spark {
+  opacity: 0;
+  animation: gaming-spark-trail 2s ease-in-out infinite;
+}
+
+[data-performance-mode="premium"] .gaming-cta-priority .gaming-cta-spark:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+[data-performance-mode="premium"] .gaming-cta-priority .gaming-cta-spark:nth-child(2) {
+  top: 30%;
+  right: 15%;
+  animation-delay: 0.7s;
+}
+
+[data-performance-mode="premium"] .gaming-cta-priority .gaming-cta-spark:nth-child(3) {
+  bottom: 25%;
+  left: 20%;
+  animation-delay: 1.4s;
+}
+
+/* ============================================================================
+   MOBILE TOUCH OPTIMIZATION
+   ============================================================================ */
+
+@media (hover: none) and (pointer: coarse) {
+  .gaming-cta-button:active {
+    transform: scale(0.96);
+  }
+
+  /* Reduce animation intensity on mobile */
+  [data-performance-mode="premium"] .gaming-cta-priority {
+    animation-duration: 4s;
+  }
+
+  [data-performance-mode="premium"] .gaming-cta-shimmer::after {
+    animation-duration: 5s;
+  }
+}
+
+/* ============================================================================
+   PERFORMANCE MODE OVERRIDES
+   ============================================================================ */
+
+/* Low Performance - Minimal effects */
+[data-performance-mode="low"] .gaming-cta-shimmer,
+[data-performance-mode="low"] .gaming-cta-particles,
+[data-performance-mode="low"] .gaming-cta-spark,
+[data-performance-mode="low"] .gaming-cta-icon::before,
+[data-performance-mode="low"] .gaming-cta-badge::before,
+[data-performance-mode="low"] .gaming-cta-weekly-available::before,
+[data-performance-mode="low"] .gaming-cta-secondary::after {
+  display: none;
+}
+
+[data-performance-mode="low"] .gaming-cta-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Standard Performance - Balanced */
+[data-performance-mode="standard"] .gaming-cta-particles,
+[data-performance-mode="standard"] .gaming-cta-spark,
+[data-performance-mode="standard"] .gaming-cta-icon::before,
+[data-performance-mode="standard"] .gaming-cta-secondary::after {
+  display: none;
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .gaming-cta-button,
+  .gaming-cta-button *,
+  .gaming-cta-button::before,
+  .gaming-cta-button::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Focus states for accessibility */
+.gaming-cta-button:focus-visible {
+  outline: 3px solid var(--action-color, #F7931E);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .gaming-cta-button {
+    min-height: 44px;
+  }
+
+  [data-performance-mode="premium"] .gaming-cta-priority {
+    animation-duration: 4s;
+  }
+
+  .gaming-cta-button:hover {
+    transform: none;
+  }
+
+  .gaming-cta-button:active {
+    transform: scale(0.97);
+  }
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  .gaming-cta-button {
+    box-shadow:
+      0 4px 16px var(--action-color-alpha-25, rgba(247, 147, 30, 0.25)),
+      0 2px 8px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
