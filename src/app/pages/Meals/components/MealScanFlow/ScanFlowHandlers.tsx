@@ -508,12 +508,18 @@ export function useScanFlowHandlers({
             });
           }
 
-          // Force immediate refresh of gaming widget
-          await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
-          await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
-          await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
+          // Force immediate refresh of gaming widget with aggressive invalidation
+          // Invalidate first to force cache clear
+          await queryClient.invalidateQueries({ queryKey: ['gamification-progress'], refetchType: 'all' });
+          await queryClient.invalidateQueries({ queryKey: ['xp-events'], refetchType: 'all' });
+          await queryClient.invalidateQueries({ queryKey: ['daily-actions'], refetchType: 'all' });
 
-          logger.info('MEAL_SCAN_FLOW', 'Gaming widget queries refetched after meal scan', {
+          // Then refetch all queries (including inactive ones)
+          await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'all' });
+          await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'all' });
+          await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'all' });
+
+          logger.info('MEAL_SCAN_FLOW', 'Gaming widget queries invalidated and refetched after meal scan', {
             clientScanId,
             timestamp: new Date().toISOString()
           });

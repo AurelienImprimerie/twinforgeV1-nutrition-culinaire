@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/system/supabase/client';
 import { gamificationService } from '@/services/dashboard/coeur';
+import logger from '@/lib/utils/logger';
 import type {
   GamificationProgress,
   XpEvent,
@@ -10,6 +12,11 @@ import type {
 } from '@/services/dashboard/coeur';
 
 export function useGamificationProgress() {
+  const queryClient = useQueryClient();
+  const realtimeChannelRef = useRef<any>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSyncTimeRef = useRef<number>(Date.now());
+
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -18,7 +25,7 @@ export function useGamificationProgress() {
     }
   });
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['gamification-progress', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error('No user');
@@ -44,6 +51,116 @@ export function useGamificationProgress() {
     refetchOnWindowFocus: true,
     retry: false
   });
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    let mounted = true;
+    let realtimeActive = true;
+
+    const setupRealtime = async () => {
+      logger.info('GAMIFICATION_HOOK', '📡 Setting up realtime subscription for gamification progress', {
+        userId: session.user.id
+      });
+
+      const channel = supabase
+        .channel(`gamification-progress-${session.user.id}`, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: session.user.id }
+          }
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'user_gamification_progress',
+            filter: `user_id=eq.${session.user.id}`,
+          },
+          async (payload) => {
+            if (!mounted) return;
+
+            logger.info('GAMIFICATION_HOOK', '🔔 Realtime gamification update received', {
+              event: payload.eventType,
+              oldXp: payload.old?.current_xp,
+              newXp: payload.new?.current_xp,
+              oldLevel: payload.old?.current_level,
+              newLevel: payload.new?.current_level,
+              timestamp: new Date().toISOString()
+            });
+
+            await queryClient.refetchQueries({
+              queryKey: ['gamification-progress', session.user.id],
+              type: 'all'
+            });
+
+            await queryClient.refetchQueries({
+              queryKey: ['xp-events', session.user.id],
+              type: 'all'
+            });
+
+            lastSyncTimeRef.current = Date.now();
+          }
+        )
+        .subscribe((status) => {
+          logger.info('GAMIFICATION_HOOK', '📡 Realtime subscription status change', {
+            status,
+            userId: session.user.id
+          });
+
+          if (status === 'SUBSCRIBED') {
+            logger.info('GAMIFICATION_HOOK', '✅ Realtime subscription active for gamification progress');
+            realtimeActive = true;
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            logger.error('GAMIFICATION_HOOK', '❌ Realtime subscription failed - falling back to polling', { status });
+            realtimeActive = false;
+          } else if (status === 'CLOSED') {
+            logger.warn('GAMIFICATION_HOOK', '⚠️ Realtime connection closed', { status });
+            realtimeActive = false;
+          }
+        });
+
+      realtimeChannelRef.current = channel;
+
+      pollingIntervalRef.current = setInterval(() => {
+        if (!mounted) return;
+
+        const timeSinceLastSync = Date.now() - lastSyncTimeRef.current;
+
+        if (!realtimeActive || timeSinceLastSync > 30000) {
+          logger.debug('GAMIFICATION_HOOK', '🔄 Polling for gamification updates', {
+            timeSinceLastSync: Math.round(timeSinceLastSync / 1000),
+            realtimeActive
+          });
+
+          queryClient.refetchQueries({
+            queryKey: ['gamification-progress', session.user.id],
+            type: 'all'
+          });
+
+          lastSyncTimeRef.current = Date.now();
+        }
+      }, 30000);
+    };
+
+    setupRealtime();
+
+    return () => {
+      mounted = false;
+
+      if (realtimeChannelRef.current) {
+        logger.info('GAMIFICATION_HOOK', '🔌 Cleaning up realtime subscription');
+        supabase.removeChannel(realtimeChannelRef.current);
+      }
+
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [session?.user?.id, queryClient]);
+
+  return query;
 }
 
 export function useRecentXpEvents(limit: number = 20) {

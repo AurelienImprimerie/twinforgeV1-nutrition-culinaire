@@ -173,13 +173,20 @@ export function useBarcodePipelineHandlers({
               timestamp: new Date().toISOString()
             });
 
-            // Force refetch gamification queries to refresh gaming widget immediately
+            // Force immediate refresh of gaming widget with aggressive invalidation
             const { queryClient } = await import('../../../../../app/providers/AppProviders');
-            await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'active' });
-            await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'active' });
-            await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'active' });
 
-            logger.info('BARCODE_PIPELINE', 'Gaming widget queries refetched after barcode scan', {
+            // Invalidate first to force cache clear
+            await queryClient.invalidateQueries({ queryKey: ['gamification-progress'], refetchType: 'all' });
+            await queryClient.invalidateQueries({ queryKey: ['xp-events'], refetchType: 'all' });
+            await queryClient.invalidateQueries({ queryKey: ['daily-actions'], refetchType: 'all' });
+
+            // Then refetch all queries (including inactive ones)
+            await queryClient.refetchQueries({ queryKey: ['gamification-progress'], type: 'all' });
+            await queryClient.refetchQueries({ queryKey: ['xp-events'], type: 'all' });
+            await queryClient.refetchQueries({ queryKey: ['daily-actions'], type: 'all' });
+
+            logger.info('BARCODE_PIPELINE', 'Gaming widget queries invalidated and refetched after barcode scan', {
               clientScanId,
               barcode: barcodeItem.barcode,
               xpAwarded: 15,
