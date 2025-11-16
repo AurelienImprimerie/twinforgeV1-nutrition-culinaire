@@ -1,5 +1,7 @@
 import { supabase } from '@/system/supabase/client';
 import logger from '@/lib/utils/logger';
+import { usePointsNotificationStore } from '@/system/store/coeur/pointsNotificationStore';
+import { ICONS } from '@/ui/icons/registry';
 
 export interface GamificationProgress {
   userId: string;
@@ -99,6 +101,139 @@ const XP_VALUES = {
 } as const;
 
 class GamificationService {
+  /**
+   * Get icon for action type
+   */
+  private _getActionIcon(eventType: string): keyof typeof ICONS {
+    const iconMap: Record<string, keyof typeof ICONS> = {
+      'meal_scan': 'Utensils',
+      'barcode_scan': 'ScanLine',
+      'fridge_scan': 'Refrigerator',
+      'recipe_generated': 'ChefHat',
+      'meal_plan_generated': 'Calendar',
+      'shopping_list_generated': 'ShoppingCart',
+      'training_session': 'Dumbbell',
+      'body_scan': 'Scan',
+      'fasting_success': 'Clock',
+      'fasting_success_exceeded': 'Clock',
+      'fasting_partial_12h': 'Clock',
+      'fasting_partial_8h': 'Clock',
+      'wearable_sync': 'Watch',
+      'weight_update': 'Weight',
+      'daily_calorie_goal_met': 'Target',
+    };
+    return iconMap[eventType] || 'Star';
+  }
+
+  /**
+   * Get color for event category
+   */
+  private _getCategoryColor(eventCategory: XpEvent['eventCategory']): string {
+    const colorMap: Record<XpEvent['eventCategory'], string> = {
+      'nutrition': '#10B981',      // Vert - Forge Nutritionnelle
+      'training': '#3B82F6',       // Bleu - Training
+      'fasting': '#F59E0B',        // Orange - Fasting
+      'body_scan': '#8B5CF6',      // Violet - Body Scan
+      'wearable': '#06B6D4',       // Cyan - Wearable
+      'general': '#6B7280',        // Gris - General
+    };
+    return colorMap[eventCategory] || '#6B7280';
+  }
+
+  /**
+   * Get user-friendly label for action
+   */
+  private _getActionLabel(eventType: string): string {
+    const labelMap: Record<string, string> = {
+      'meal_scan': 'Scan de repas',
+      'barcode_scan': 'Scan de code-barre',
+      'fridge_scan': 'Scan de frigo',
+      'recipe_generated': 'Recette générée',
+      'meal_plan_generated': 'Plan de repas',
+      'shopping_list_generated': 'Liste de courses',
+      'training_session': 'Session d\'entraînement',
+      'body_scan': 'Scan corporel',
+      'fasting_success': 'Jeûne réussi',
+      'fasting_success_exceeded': 'Jeûne dépassé',
+      'fasting_partial_12h': 'Jeûne 12h+',
+      'fasting_partial_8h': 'Jeûne 8h+',
+      'wearable_sync': 'Sync wearable',
+      'weight_update': 'Mise à jour poids',
+      'daily_calorie_goal_met': 'Objectif calorique',
+    };
+    return labelMap[eventType] || eventType;
+  }
+
+  /**
+   * Map event category to notification category
+   */
+  private _mapEventCategoryToNotificationCategory(
+    eventCategory: XpEvent['eventCategory']
+  ): 'nutrition' | 'culinaire' | 'training' | 'fasting' | 'general' {
+    if (eventCategory === 'nutrition') {
+      return 'nutrition'; // Will be split between nutrition/culinaire based on event type
+    }
+    if (eventCategory === 'training') return 'training';
+    if (eventCategory === 'fasting') return 'fasting';
+    return 'general';
+  }
+
+  /**
+   * Determine if event is culinaire (Forge Culinaire) or nutrition (Forge Nutritionnelle)
+   */
+  private _isCulinaireEvent(eventType: string): boolean {
+    const culinaireEvents = ['fridge_scan', 'recipe_generated', 'meal_plan_generated', 'shopping_list_generated'];
+    return culinaireEvents.includes(eventType);
+  }
+
+  /**
+   * Show notification for XP award
+   */
+  private _showNotification(
+    eventType: string,
+    eventCategory: XpEvent['eventCategory'],
+    xpAwarded: number
+  ): void {
+    try {
+      const { showNotification } = usePointsNotificationStore.getState();
+
+      // Determine final category and color
+      let finalCategory: 'nutrition' | 'culinaire' | 'training' | 'fasting' | 'general';
+      let finalColor: string;
+
+      if (eventCategory === 'nutrition' && this._isCulinaireEvent(eventType)) {
+        finalCategory = 'culinaire';
+        finalColor = '#EC4899'; // Rose - Forge Culinaire
+      } else {
+        finalCategory = this._mapEventCategoryToNotificationCategory(eventCategory);
+        finalColor = this._getCategoryColor(eventCategory);
+      }
+
+      showNotification({
+        type: 'forge-action',
+        actionId: eventType,
+        actionLabel: this._getActionLabel(eventType),
+        pointsAwarded: xpAwarded,
+        icon: this._getActionIcon(eventType),
+        color: finalColor,
+        category: finalCategory,
+      });
+
+      logger.info('GAMIFICATION', 'Notification shown for XP award', {
+        eventType,
+        xpAwarded,
+        category: finalCategory,
+      });
+    } catch (error) {
+      logger.error('GAMIFICATION', 'Failed to show notification', {
+        eventType,
+        xpAwarded,
+        error,
+      });
+      // Don't throw - notification failure should not block XP attribution
+    }
+  }
+
   async getUserProgress(userId: string): Promise<GamificationProgress | null> {
     try {
       const { data, error } = await supabase
@@ -203,6 +338,11 @@ class GamificationService {
         newLevel: result.newLevel,
         streakDays: result.streakDays
       });
+
+      // Show notification for XP award
+      if (result.xpAwarded > 0) {
+        this._showNotification(eventType, eventCategory, result.xpAwarded);
+      }
 
       return result;
     } catch (error) {
