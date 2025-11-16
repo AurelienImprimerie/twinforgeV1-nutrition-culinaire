@@ -603,9 +603,10 @@ Deno.serve(async (req) => {
     });
 
     // Check token balance before OpenAI call
-    // Realistic estimate: 7 days × ~18 tokens/day + 1 summary × ~16 tokens = ~142 tokens
-    // Adding 15% safety buffer to prevent negative balances
-    const estimatedTokens = 150;
+    // UPDATED estimate: 7 days × ~25 tokens/day + 1 summary × ~25 tokens = ~200 tokens
+    // Accounts for reasoning tokens (60% of output) + 20% safety buffer
+    // This ensures x5+ margin instead of x2.85
+    const estimatedTokens = 200;
     const tokenCheck = await checkTokenBalance(supabase, requestData.user_id, estimatedTokens);
 
     if (!tokenCheck.hasEnoughTokens) {
@@ -733,7 +734,7 @@ Deno.serve(async (req) => {
             controller.enqueue(encoder.encode(heartbeatChunk));
           }
 
-          // Generate weekly summary
+          // Generate weekly summary with error handling
           const summaryProgressChunk = `data: ${JSON.stringify({
             type: 'progress',
             data: {
@@ -744,16 +745,63 @@ Deno.serve(async (req) => {
           })}\n\n`;
           controller.enqueue(encoder.encode(summaryProgressChunk));
 
-          const { summary, tokenUsage: summaryTokenUsage } = await generateWeeklySummary(
-            userProfile,
-            days,
-            requestData.week_number,
-            requestData.start_date
-          );
+          let summary: any = null;
+          let summaryGenerated = false;
 
-          totalTokenUsage.input += summaryTokenUsage.input;
-          totalTokenUsage.output += summaryTokenUsage.output;
-          totalTokenUsage.costUsd += summaryTokenUsage.costUsd;
+          try {
+            const { summary: generatedSummary, tokenUsage: summaryTokenUsage } = await generateWeeklySummary(
+              userProfile,
+              days,
+              requestData.week_number,
+              requestData.start_date
+            );
+
+            summary = generatedSummary;
+            totalTokenUsage.input += summaryTokenUsage.input;
+            totalTokenUsage.output += summaryTokenUsage.output;
+            totalTokenUsage.costUsd += summaryTokenUsage.costUsd;
+            summaryGenerated = true;
+
+            console.log('MEAL_PLAN_GENERATOR Weekly summary generated successfully', {
+              userId: requestData.user_id,
+              summaryTokens: summaryTokenUsage.input + summaryTokenUsage.output,
+              timestamp: new Date().toISOString()
+            });
+          } catch (summaryError) {
+            console.error('MEAL_PLAN_GENERATOR Weekly summary generation failed', {
+              userId: requestData.user_id,
+              error: summaryError instanceof Error ? summaryError.message : 'Unknown error',
+              daysGenerated: days.length,
+              willUseFallback: true,
+              timestamp: new Date().toISOString()
+            });
+
+            // Create fallback summary
+            const totalCalories = days.reduce((sum, day) => sum + (day.total_calories || 0), 0);
+            const avgCalories = Math.round(totalCalories / days.length);
+
+            summary = {
+              weekly_summary: `Plan alimentaire de 7 jours généré avec succès. ${days.length} jours de repas équilibrés créés selon vos préférences et objectifs nutritionnels.`,
+              nutritional_highlights: [
+                `${days.length} jours de repas personnalisés`,
+                `Moyenne de ${avgCalories} calories par jour`,
+                'Équilibre des macronutriments optimisé',
+                'Variété des sources de protéines',
+                'Respect de vos préférences alimentaires'
+              ],
+              shopping_optimization: 'Liste de courses optimisée disponible dans l\'onglet dédié.',
+              avg_calories_per_day: avgCalories,
+              ai_explanation: {
+                personalizedReasoning: 'Plan généré selon votre profil et objectifs.',
+                nutritionalStrategy: 'Équilibre nutritionnel adapté à vos besoins.',
+                adaptationHighlights: ['Personnalisation selon profil', 'Variété des repas'],
+                weeklyGoals: ['Atteindre vos objectifs caloriques', 'Maintenir l\'équilibre nutritionnel'],
+                complianceNotes: ['Résumé généré automatiquement suite à une erreur temporaire']
+              }
+            };
+
+            summaryGenerated = false;
+          }
 
           // Monitor estimation vs reality for accuracy tracking
           const totalTokensActual = totalTokenUsage.input + totalTokenUsage.output;
@@ -769,6 +817,7 @@ Deno.serve(async (req) => {
             actual_cost_usd: totalTokenUsage.costUsd.toFixed(6),
             discrepancy_percent: estimationAccuracy + '%',
             status: estimationStatus,
+            summary_generated: summaryGenerated,
             timestamp: new Date().toISOString()
           });
 
@@ -777,6 +826,7 @@ Deno.serve(async (req) => {
             weekNumber: requestData.week_number,
             avgCaloriesPerDay: summary.avg_calories_per_day,
             hasAiExplanation: !!summary.ai_explanation,
+            summaryGenerated,
             timestamp: new Date().toISOString()
           });
 
@@ -793,8 +843,19 @@ Deno.serve(async (req) => {
           })}\n\n`;
           controller.enqueue(encoder.encode(completionChunk));
 
-          // Consume tokens after successful generation
-          await consumeTokensAtomic(supabase, {
+          // CRITICAL: Always consume tokens after days generation, even if summary failed
+          console.log('MEAL_PLAN_GENERATOR Starting token consumption', {
+            userId: requestData.user_id,
+            totalCostUsd: totalTokenUsage.costUsd.toFixed(6),
+            inputTokens: totalTokenUsage.input,
+            outputTokens: totalTokenUsage.output,
+            daysGenerated: days.length,
+            summaryIncluded: summaryGenerated,
+            timestamp: new Date().toISOString()
+          });
+
+          const requestId = crypto.randomUUID();
+          const tokenResult = await consumeTokensAtomic(supabase, {
             userId: requestData.user_id,
             edgeFunctionName: 'meal-plan-generator',
             operationType: 'meal_plan_generation',
@@ -807,9 +868,28 @@ Deno.serve(async (req) => {
               start_date: requestData.start_date,
               inventory_count: inventory.length,
               has_preferences: requestData.has_preferences,
-              days_generated: days.length
+              days_generated: days.length,
+              summary_generated: summaryGenerated,
+              summary_fallback_used: !summaryGenerated
             }
-          });
+          }, requestId);
+
+          if (tokenResult.success) {
+            console.log('MEAL_PLAN_GENERATOR Token consumption successful', {
+              userId: requestData.user_id,
+              tokensConsumed: tokenResult.consumed,
+              remainingBalance: tokenResult.remainingBalance,
+              requestId,
+              timestamp: new Date().toISOString()
+            });
+          } else {
+            console.error('MEAL_PLAN_GENERATOR Token consumption failed', {
+              userId: requestData.user_id,
+              error: tokenResult.error,
+              requestId,
+              timestamp: new Date().toISOString()
+            });
+          }
 
           // Save to database
           const startDate = new Date(requestData.start_date);
